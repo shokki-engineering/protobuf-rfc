@@ -26,8 +26,8 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc8428.pack.v1";
 // forces it: one `service` block cannot span files, and `Packs` plus these two
 // methods will not fit in 250 lines. The seam is real -- `Packs` treats a pack
 // as one document, this addresses the records inside one -- but nothing here
-// owns anything. Both services operate on "the-protobuf-project.org/Pack" and a caller
-// may use either at any time.
+// owns anything. Both services operate on "the-protobuf-project.org/Pack" and
+// a caller may use either at any time.
 //
 // **Why not `UpdatePack` with a field mask.** A mask names *fields*, and every
 // record lives in one repeated field, so the finest a mask can go is "replace

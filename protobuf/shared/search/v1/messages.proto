@@ -27,8 +27,8 @@ message SearchResourcesRequest {
     (buf.validate.field).string.min_len = 1
   ];
 
-  // Resource types to search, e.g. "the-protobuf-project.org/Card". Empty searches
-  // every type the server indexes.
+  // Resource types to search, e.g. "the-protobuf-project.org/Card". Empty
+  // searches every type the server indexes.
   //
   // The string each resource declares in `google.api.resource`, which is what
   // rule 7 keys a generic service on.
@@ -93,8 +93,8 @@ message SearchResult {
     (buf.validate.field).string.min_len = 1
   ];
 
-  // The matched resource's type, e.g. "the-protobuf-project.org/Card". Present so a
-  // caller can route the re-fetch without parsing the name.
+  // The matched resource's type, e.g. "the-protobuf-project.org/Card". Present
+  // so a caller can route the re-fetch without parsing the name.
   string resource_type = 2 [(google.api.field_behavior) = REQUIRED];
 
   // Relevance, higher is better.

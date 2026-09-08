@@ -121,9 +121,10 @@ service Interchange {
   //   GET /v1/codecs
   //
   // The discovery half of the registry. A client that wants to offer "export
-  // as..." needs to know that text/vcard applies to the-protobuf-project.org/Vcard and
-  // nothing else, and guessing from the resource type is not possible -- the
-  // pairing is a deployment fact, not a property of either string.
+  // as..." needs to know that text/vcard applies to
+  // the-protobuf-project.org/Vcard and nothing else, and guessing from the
+  // resource type is not possible -- the pairing is a deployment fact, not a
+  // property of either string.
   //
   // Safe and paginated like any other List (AIP-158). The result changes only
   // when the service is redeployed with different codecs registered, so it is

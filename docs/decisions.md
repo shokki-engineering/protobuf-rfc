@@ -109,6 +109,28 @@ marked DONE, which is the convention those files themselves set.
   with a different support burden.
 
 
+## The resource-type prefix
+
+`the-protobuf-project.org`, on all nineteen `google.api.resource` declarations
+and every `resource_reference` that points at one.
+
+It was `protobufrfc.dev` until the SenML packages landed, and this file listed
+the change as open with the note "cheap to change now; a breaking change once a
+consumer depends on the type strings". Four new resources made it 27% less
+cheap, which is what forced the decision rather than any new argument.
+
+The new value matches the GitHub organisation and the BSR module owner --
+`the-protobuf-project` in both -- so the type strings, the repository and
+`buf.build/the-protobuf-project/rfc` now agree. Neither domain resolves;
+AIP-123 wants a service name in this slot and does not require one that does.
+
+Two costs, both accepted. The hyphens are unusual in a resource type and read
+oddly next to `pubsub.googleapis.com/Topic`, but they are legal DNS and
+api-linter is clean on all 113 files. And it is nine characters longer, which
+pushed eleven comment lines past the wrap; those paragraphs were rewrapped
+rather than left ragged, which is why files with no SenML content appear in
+that diff.
+
 ## Built after being deferred
 
 Four things this file previously listed as not built now are, at the owner's
@@ -189,9 +211,6 @@ Everything the plans covered is built. What remains is either a decision
 nobody has needed to make yet or a consequence of work moving between
 repositories.
 
-- **`the-protobuf-project.org`** is the resource-type prefix on all fourteen
-  `google.api.resource` declarations and is a placeholder domain. Cheap to
-  change now; a breaking change once a consumer depends on the type strings.
 - **Four committed files reference documents that are moving out.**
   `CLAUDE.md` line 183 *imports* `docs/ontology.md`, which is rule 14 itself;
   `README.md` and `docs/conventions.md` point at `PLAN.md` and `plan/`. Those

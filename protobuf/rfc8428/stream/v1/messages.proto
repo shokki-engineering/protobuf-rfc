@@ -1,0 +1,160 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.stream.v1;
+
+import "buf/validate/validate.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/field_mask.proto";
+import "protobuf/rfc8428/stream/v1/stream.proto";
+import "protobuf/rfc8428/stream/v1/types.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "MessagesProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.stream.v1";
+
+// Request message for Streams.GetStream, AIP-131 <https://aip.dev/131>.
+message GetStreamRequest {
+  // Name of the stream to retrieve, "streams/{stream}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Stream",
+    (buf.validate.field).string.pattern = "^streams/[^/]+$"
+  ];
+}
+
+// Request message for Streams.ListStreams, AIP-132 <https://aip.dev/132>.
+message ListStreamsRequest {
+  // Maximum streams to return. Defaults to 50, capped at 1000.
+  int32 page_size = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).int32 = {
+      gte: 0
+      lte: 1000
+    }
+  ];
+
+  // Page token from a previous ListStreamsResponse.next_page_token.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression, AIP-160 <https://aip.dev/160>.
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Include soft-deleted streams in the result. AIP-164 <https://aip.dev/164>.
+  bool show_deleted = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for Streams.ListStreams, AIP-132 <https://aip.dev/132>.
+message ListStreamsResponse {
+  // The streams on this page.
+  repeated Stream streams = 1;
+
+  // Token for the next page, empty when this is the last page.
+  string next_page_token = 2;
+}
+
+// Request message for Streams.CreateStream, AIP-133 <https://aip.dev/133>.
+message CreateStreamRequest {
+  // The stream to create.
+  Stream stream = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).required = true
+  ];
+
+  // Client-assigned id, becoming the last segment of the resource name. The
+  // server generates one when empty.
+  string stream_id = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for Streams.UpdateStream, AIP-134 <https://aip.dev/134>.
+message UpdateStreamRequest {
+  // The stream to update. Its name field identifies the stream.
+  Stream stream = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).required = true
+  ];
+
+  // Fields to update. An empty mask updates all mutable fields.
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for Streams.DeleteStream, AIP-135 <https://aip.dev/135>.
+message DeleteStreamRequest {
+  // Name of the stream to delete, "streams/{stream}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Stream",
+    (buf.validate.field).string.pattern = "^streams/[^/]+$"
+  ];
+}
+
+// Request message for Streams.UndeleteStream, AIP-164 <https://aip.dev/164>.
+message UndeleteStreamRequest {
+  // Name of the soft-deleted stream to restore.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Stream",
+    (buf.validate.field).string.pattern = "^streams/[^/]+$"
+  ];
+}
+
+// Request message for Streams.AppendStreamRecords, RFC 8428 section 4.8 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8>.
+message AppendStreamRecordsRequest {
+  // Name of the stream to append to, "streams/{stream}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Stream",
+    (buf.validate.field).string.pattern = "^streams/[^/]+$"
+  ];
+
+  // The records to add, in send order, appended after everything already in
+  // the stream.
+  //
+  // Capped at 1000 per call, the same ceiling `page_size` uses on the way out.
+  // A stream is unbounded over its life but a single request is not, and an
+  // append that has to be retried should be small enough to retry.
+  repeated StreamRecord records = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).repeated = {
+      min_items: 1
+      max_items: 1000
+    }
+  ];
+
+  // Weak validator, AIP-154 <https://aip.dev/154>. When set, the append succeeds only if the
+  // stream is unchanged since it was read.
+  //
+  // Usually left empty, and that is the right default: appends from one
+  // producer are ordered by arrival and do not conflict. Set it when a second
+  // writer must not have got there first.
+  string etag = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for Streams.ResolveStream, RFC 8428 section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6>.
+message ResolveStreamRequest {
+  // Name of the stream to resolve, "streams/{stream}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Stream",
+    (buf.validate.field).string.pattern = "^streams/[^/]+$"
+  ];
+}
+
+// Response message for Streams.ResolveStream, RFC 8428 section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6>.
+message ResolveStreamResponse {
+  // The resolved records, in chronological order.
+  //
+  // Plain `Record`s, not `StreamRecord`s: once resolved every time is
+  // absolute, so the per-record instant that made the wrapper necessary has
+  // been consumed, and carrying it further would invite it being applied
+  // twice. This is also the shape a Pack resolves to, which is the point --
+  // resolved records from a stream and from a pack are the same thing.
+  repeated Record records = 1;
+
+  // The stream's Base Version, carried once rather than repeated onto every
+  // record, for the reason given on ResolvePackResponse.
+  int32 base_version = 2;
+}

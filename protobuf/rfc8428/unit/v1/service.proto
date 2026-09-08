@@ -1,0 +1,175 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.unit.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/protobuf/empty.proto";
+import "protobuf/rfc8428/unit/v1/messages.proto";
+import "protobuf/rfc8428/unit/v1/unit.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "ServiceProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.unit.v1";
+
+// Units is this deployment's copy of the SenML Units registry,
+// RFC 8428 section 12.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1>, and of the Secondary Units subregistry,
+// RFC 8798 section 3 <https://www.rfc-editor.org/rfc/rfc8798.html#section-3>.
+//
+// A copy, not a mirror. RFC 8798 section 4 <https://www.rfc-editor.org/rfc/rfc8798.html#section-4> asks implementations not to poll
+// IANA -- doing so "can create high load at IANA and a potential single point
+// of failure" -- and to receive registry updates through their normal software
+// update path instead. This service is where those updates land, so nothing in
+// it fetches anything from IANA, and CreateUnit is how a new entry arrives.
+//
+// Nothing here validates a record's unit against the registry either. Section
+// 4.5.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.2> permits a record with no unit at all and leaves unrecognised
+// units to the application, so `Packs.CreatePack` never consults this service.
+// The registry answers "what does this symbol mean and how do I convert it",
+// which is a question asked after a pack is stored, not before.
+service Units {
+  // Retrieves one registry entry.
+  //
+  //   GET /v1/{name=units/*}
+  //
+  // Safe and idempotent. To resolve a symbol read out of a record, use List
+  // with a filter -- the resource name is this deployment's, the symbol is the
+  // registry's.
+  //
+  //   NOT_FOUND          no such entry, or it is soft-deleted and `show_deleted` was not set
+  //   INVALID_ARGUMENT   name does not match units/*
+  //   PERMISSION_DENIED  caller may not read it
+  rpc GetUnit(GetUnitRequest) returns (Unit) {
+    option (google.api.http) = {get: "/v1/{name=units/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists registry entries.
+  //
+  //   GET /v1/units
+  //
+  // Paginated per AIP-158: pass `page_size` (defaults to 50, capped at 1000)
+  // and the `next_page_token` from the previous response. An empty
+  // `next_page_token` means the last page. Page tokens are opaque and may
+  // expire; do not construct or store them.
+  //
+  // Filtering uses the AIP-160 expression language over the entry's own
+  // fields, and this is the method that does the real work. `symbol = "ms"`
+  // resolves a unit read out of a record. `senml_unit = "s"` lists everything
+  // convertible into seconds. `senml_unit = ""` is the primary registry alone,
+  // and `producing_discouraged = false` is the set an encoder may choose from.
+  // Results carry no guaranteed order.
+  //
+  //   INVALID_ARGUMENT   malformed filter, or page_size out of range
+  //   PERMISSION_DENIED  caller may not list this collection
+  rpc ListUnits(ListUnitsRequest) returns (ListUnitsResponse) {
+    option (google.api.http) = {get: "/v1/units"};
+  }
+
+  // Adds a registry entry.
+  //
+  //   POST /v1/units
+  //   body: the entry itself
+  //
+  // Server-assigned fields on the request body are ignored: `name`, `uid`,
+  // `etag` and the timestamps are set by the server regardless of what is
+  // sent. `symbol` is not among them -- it is the registry's and is immutable
+  // thereafter. Supply `unit_id` to choose the final path segment; leave it
+  // empty and the server generates one.
+  //
+  // A secondary entry must carry `senml_unit` and `scale`; a primary entry
+  // must carry neither `scale` nor `offset`. That is RFC 8798 section 3 <https://www.rfc-editor.org/rfc/rfc8798.html#section-3>'s
+  // shape, and it is enforced as a message rule rather than left to a comment.
+  //
+  // Not idempotent. Retrying after a timeout may add the symbol twice; supply
+  // `unit_id` if the caller needs retry safety.
+  //
+  //   ALREADY_EXISTS     that unit_id is taken
+  //   INVALID_ARGUMENT   `symbol` is empty, or the secondary-unit rule is violated
+  //   PERMISSION_DENIED  caller may not create here
+  rpc CreateUnit(CreateUnitRequest) returns (Unit) {
+    option (google.api.http) = {
+      post: "/v1/units"
+      body: "unit"
+    };
+    option (google.api.method_signature) = "unit,unit_id";
+  }
+
+  // Updates a registry entry.
+  //
+  //   PATCH /v1/{unit.name=units/*}
+  //   body: the entry itself
+  //
+  // A partial update: only fields named in `update_mask` are written. An empty
+  // mask writes every mutable field, which will clear anything the caller left
+  // unset -- pass a mask unless that is the intent. OUTPUT_ONLY and IMMUTABLE
+  // fields are rejected rather than silently dropped, and `symbol` is
+  // IMMUTABLE: RFC 8428 section 12.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1> exists so a symbol maps to one
+  // quantity, and re-pointing it would change what every stored reading in
+  // that unit means.
+  //
+  // In practice this corrects a `description` or a `reference`, or marks an
+  // entry `producing_discouraged`. Changing `scale` on a live entry silently
+  // rewrites the meaning of past conversions; prefer a new symbol.
+  //
+  // Idempotent. Pass the `etag` read from Get to make the write conditional.
+  //
+  //   NOT_FOUND          no such entry
+  //   ABORTED            etag does not match the stored entry
+  //   INVALID_ARGUMENT   mask names an unknown or immutable field, `symbol` among them
+  //   PERMISSION_DENIED  caller may not modify it
+  rpc UpdateUnit(UpdateUnitRequest) returns (Unit) {
+    option (google.api.http) = {
+      patch: "/v1/{unit.name=units/*}"
+      body: "unit"
+    };
+    option (google.api.method_signature) = "unit,update_mask";
+  }
+
+  // Removes a registry entry.
+  //
+  //   DELETE /v1/{name=units/*}
+  //
+  // Soft delete: the entry is marked deleted, disappears from List unless
+  // `show_deleted` is set, and is purged at `expire_time`. Recover it with
+  // Undelete before then.
+  //
+  // Records already stored in the unit are untouched and stay readable. That
+  // is the honest outcome: IANA does not retract units, so deleting one here
+  // means this deployment stopped carrying the entry, not that the
+  // measurements taken in it became invalid. `producing_discouraged` is
+  // usually the better tool.
+  //
+  // Idempotent in effect but not in reporting: a second delete returns
+  // NOT_FOUND rather than succeeding silently.
+  //
+  //   NOT_FOUND          no such entry
+  //   ABORTED            etag does not match
+  //   PERMISSION_DENIED  caller may not delete it
+  rpc DeleteUnit(DeleteUnitRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/{name=units/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Restores a soft-deleted registry entry.
+  //
+  //   POST /v1/{name=units/*}:undelete
+  //
+  // Valid only before `expire_time`; after that the entry is gone and this
+  // returns NOT_FOUND. Clears `delete_time` and `expire_time` and returns the
+  // entry as it was.
+  //
+  //   NOT_FOUND          no such entry, or already purged
+  //   ALREADY_EXISTS     the entry is not deleted
+  //   PERMISSION_DENIED  caller may not restore it
+  rpc UndeleteUnit(UndeleteUnitRequest) returns (Unit) {
+    option (google.api.http) = {
+      post: "/v1/{name=units/*}:undelete"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+}

@@ -1,0 +1,200 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.pack.v1;
+
+import "buf/validate/validate.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/duration.proto";
+import "protobuf/rfc8428/pack/v1/extension.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "PatchTypesProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.pack.v1";
+
+// FetchRecord selects records out of a pack, RFC 8790 section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1>.
+//
+// A cut-down `Record`: a name to match, optionally narrowed by a time and a
+// unit. Section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1> is closed about the field list -- "Fetch Records MUST
+// NOT contain other fields than name, base name, time, base time, unit, and
+// base unit", and an implementation "MUST reject and generate an error" for a
+// Fetch Pack carrying anything else. Those six fields are exactly what is
+// here, so the schema enforces the rule by having nowhere to put a seventh.
+//
+// **Not a `Record` with fields left unset**, and the difference is not
+// cosmetic. Section 3 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3>: "the Fetch and Patch Records do not have a default
+// time or base version when the fields are omitted." A `Record` with no time
+// means time zero, which RFC 8428 section 4.5.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.3> reads as "now"; a
+// FetchRecord with no time means *match any time*. Reusing `Record` here would
+// turn "give me every reading from this sensor" into "give me the one taken
+// now", silently. That is why the two time fields carry explicit presence.
+//
+// Matching is against the **resolved** form of both sides, section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1>:
+// base name concatenated onto name, base time added to time, so a fetch
+// written with base fields matches a target written without them.
+//
+// Reference: RFC 8790 "FETCH and PATCH with Sensor Measurement Lists (SenML)",
+// section 3.1.
+// https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1
+message FetchRecord {
+  option (buf.validate.message).cel = {
+    id: "fetch_record.needs_a_name"
+    message: "a fetch record needs a name, a base name, or both (RFC 8790 section 3.1)"
+    expression: "this.base_sensor_id != '' || this.sensor_id != ''"
+  };
+
+  // Base Name (bn). Prepended to `sensor_id` here and in every following
+  // fetch record, exactly as in a pack.
+  string base_sensor_id = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).string.pattern = "^[A-Za-z0-9][-:./_A-Za-z0-9]*$",
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+
+  // Name (n). Section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1> requires a name or a base name; either alone is
+  // enough, and the resolved concatenation is what gets matched.
+  string sensor_id = 2 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).string.pattern = "^[-:./_A-Za-z0-9]*$",
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+
+  // Base Time (bt). Added to `time_value` when narrowing by time.
+  //
+  // Explicitly optional, unlike its counterpart on `Record`: absent here means
+  // "any time", not zero. See the message comment.
+  optional double base_time_value = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Time (t). When set, only a target record whose resolved time *and* name
+  // are equal is matched, section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1>. Explicitly optional for the
+  // reason above.
+  optional double time_value = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Base Unit (bu). Applies to this and following fetch records that set no
+  // `unit` of their own.
+  string base_unit = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Unit (u). When set, only a target record whose resolved unit and name are
+  // equal is matched, section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1>. When both this and `time_value` are
+  // set, both must match.
+  string unit = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// PatchRecord adds, replaces or removes one record of a pack,
+// RFC 8790 section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>.
+//
+// It is a selector and a payload at once: the name, time and unit pick the
+// target the same way a `FetchRecord` does, and everything else is what the
+// target becomes. Three outcomes, all from section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>: a match is
+// replaced with this record's contents, no match means this record is added to
+// the pack, and `remove` deletes the match.
+//
+// Each patch record must match **at most one** target. Section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2> calls a
+// record matching several invalid, because applying one patch to many targets
+// would leave the pack holding copies of the same record.
+//
+// **Not a `Record` plus a flag.** The same presence problem `FetchRecord` has
+// -- an absent time means "any", not zero -- plus one of its own: `Record`
+// requires a value or a sum, and a removal carries neither. Section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>
+// spells a removal `"v":null`, which protobuf has no way to express on a
+// `double`, so the null becomes `remove` and the rules become this message's.
+//
+// Reference: RFC 8790 "FETCH and PATCH with Sensor Measurement Lists (SenML)",
+// section 3.2.
+// https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2
+message PatchRecord {
+  option (buf.validate.message).cel = {
+    id: "patch_record.needs_a_name"
+    message: "a patch record needs a name, a base name, or both (RFC 8790 section 3.2)"
+    expression: "this.base_sensor_id != '' || this.sensor_id != ''"
+  };
+  option (buf.validate.message).cel = {
+    id: "patch_record.value_xor_remove"
+    message:
+      "a patch record carries a value or a sum, and a removal carries "
+      "neither (RFC 8790 section 3.2)"
+    expression:
+      "(has(this.number_value) || has(this.string_value) || "
+      "has(this.boolean_value) || has(this.data_value) || has(this.sum)) "
+      "!= this.remove"
+  };
+
+  // Base Name (bn), matched as in a fetch record.
+  string base_sensor_id = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).string.pattern = "^[A-Za-z0-9][-:./_A-Za-z0-9]*$",
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+
+  // Name (n), matched as in a fetch record. A name matching nothing in the
+  // target pack adds the record rather than failing, section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>.
+  string sensor_id = 2 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).string.pattern = "^[-:./_A-Za-z0-9]*$",
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+
+  // Base Time (bt). Explicitly optional: absent means "any time", not zero.
+  optional double base_time_value = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Time (t). Explicitly optional, for the reason above. Section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>
+  // compares resolved times, and replaces the target only when the times
+  // either are equal or are absent on both sides.
+  optional double time_value = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Base Unit (bu).
+  string base_unit = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Unit (u), compared like the time.
+  string unit = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Base Value (bv), written onto the target.
+  double base_value = 7 [(google.api.field_behavior) = OPTIONAL];
+
+  // Base Sum (bs), written onto the target.
+  optional double base_sum = 8 [(google.api.field_behavior) = OPTIONAL];
+
+  // Sum (s), written onto the target. Section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2> accepts a sum in place
+  // of a value, matching RFC 8428 section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>.
+  optional double sum = 9 [(google.api.field_behavior) = OPTIONAL];
+
+  // Update Time (ut), written onto the target.
+  google.protobuf.Duration update_duration = 10 [(google.api.field_behavior) = OPTIONAL];
+
+  // The value to write. Section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>: "All Patch Records MUST contain at
+  // least a SenML Value or Sum field" -- unless the record is a removal.
+  oneof value {
+    // Value (v).
+    double number_value = 11;
+
+    // String Value (vs).
+    string string_value = 12;
+
+    // Boolean Value (vb).
+    bool boolean_value = 13;
+
+    // Data Value (vd), held decoded as everywhere else here.
+    bytes data_value = 14;
+  }
+
+  // Extension fields to write onto the target, RFC 8428 section 4.4 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.4>.
+  //
+  // The must-understand rule does **not** apply in a patch. RFC 8790 <https://www.rfc-editor.org/rfc/rfc8790.html>
+  // section 5 <https://www.rfc-editor.org/rfc/rfc8790.html#section-5> suspends it: an unrecognised label here "MUST NOT generate an
+  // error" and is written to the target like any other field, even spelled
+  // with the trailing "_" that would be fatal in a pack.
+  repeated ExtensionField extensions = 15 [(google.api.field_behavior) = OPTIONAL];
+
+  // Delete the matched record instead of writing to it.
+  //
+  // This is section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>'s `"v":null`, which has no protobuf spelling: a
+  // `double` field cannot be null, and an unset one is indistinguishable from
+  // a patch that simply carries a sum instead. A named boolean says the same
+  // thing and cannot be misread.
+  //
+  // A removal that matches nothing is not an error -- section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2> says
+  // such a record "MUST NOT be added", so the outcome is simply no change.
+  bool remove = 16 [(google.api.field_behavior) = OPTIONAL];
+}

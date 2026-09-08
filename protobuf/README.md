@@ -22,13 +22,17 @@ Every protobuf module under `protobuf/`. Each row links to that module's generat
 | Group | `protobuf.rfc7643.group.v1` | 1 | 9 | 0 | [README](rfc7643/group/README.md) |
 | User | `protobuf.rfc7643.user.v1` | 1 | 13 | 0 | [README](rfc7643/user/README.md) |
 | Availability | `protobuf.rfc7953.availability.v1` | 1 | 11 | 1 | [README](rfc7953/availability/README.md) |
+| Pack | `protobuf.rfc8428.pack.v1` | 2 | 17 | 0 | [README](rfc8428/pack/README.md) |
+| Sensor | `protobuf.rfc8428.sensor.v1` | 1 | 8 | 0 | [README](rfc8428/sensor/README.md) |
+| Stream | `protobuf.rfc8428.stream.v1` | 1 | 14 | 0 | [README](rfc8428/stream/README.md) |
+| Unit | `protobuf.rfc8428.unit.v1` | 1 | 8 | 0 | [README](rfc8428/unit/README.md) |
 | Resource | `protobuf.rfc9073.resource.v1` | 1 | 9 | 0 | [README](rfc9073/resource/README.md) |
 | Card | `protobuf.rfc9553.card.v1` | 1 | 34 | 16 | [README](rfc9553/card/README.md) |
 | Interchange | `protobuf.shared.interchange.v1` | 1 | 10 | 0 | [README](shared/interchange/README.md) |
 | Project | `protobuf.shared.project.v1` | 1 | 8 | 1 | [README](shared/project/README.md) |
 | Search | `protobuf.shared.search.v1` | 1 | 3 | 0 | [README](shared/search/README.md) |
 | Sync | `protobuf.shared.sync.v1` | 1 | 3 | 1 | [README](shared/sync/README.md) |
-| **Total** | _19 modules_ | 20 | 234 | 44 | |
+| **Total** | _23 modules_ | 25 | 281 | 44 | |
 
 ## Dependency graph
 
@@ -49,6 +53,10 @@ graph LR
     protobuf_rfc7643_group_v1["Group<br/>protobuf.rfc7643.group.v1"]
     protobuf_rfc7643_user_v1["User<br/>protobuf.rfc7643.user.v1"]
     protobuf_rfc7953_availability_v1["Availability<br/>protobuf.rfc7953.availability.v1"]
+    protobuf_rfc8428_pack_v1["Pack<br/>protobuf.rfc8428.pack.v1"]
+    protobuf_rfc8428_sensor_v1["Sensor<br/>protobuf.rfc8428.sensor.v1"]
+    protobuf_rfc8428_stream_v1["Stream<br/>protobuf.rfc8428.stream.v1"]
+    protobuf_rfc8428_unit_v1["Unit<br/>protobuf.rfc8428.unit.v1"]
     protobuf_rfc9073_resource_v1["Resource<br/>protobuf.rfc9073.resource.v1"]
     protobuf_rfc9553_card_v1["Card<br/>protobuf.rfc9553.card.v1"]
     protobuf_shared_interchange_v1["Interchange<br/>protobuf.shared.interchange.v1"]

@@ -1,0 +1,150 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.pack.v1;
+
+import "buf/validate/validate.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/field_mask.proto";
+import "protobuf/rfc8428/pack/v1/pack.proto";
+import "protobuf/rfc8428/pack/v1/types.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "PackMessagesProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.pack.v1";
+
+// Request message for Packs.GetPack, AIP-131 <https://aip.dev/131>.
+message GetPackRequest {
+  // Name of the pack to retrieve, "packs/{pack}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (buf.validate.field).string.pattern = "^packs/[^/]+$"
+  ];
+}
+
+// Request message for Packs.ListPacks, AIP-132 <https://aip.dev/132>.
+message ListPacksRequest {
+  // Maximum packs to return. Defaults to 50, capped at 1000.
+  int32 page_size = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).int32 = {
+      gte: 0
+      lte: 1000
+    }
+  ];
+
+  // Page token from a previous ListPacksResponse.next_page_token.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression, AIP-160 <https://aip.dev/160>.
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Include soft-deleted packs in the result. AIP-164 <https://aip.dev/164>.
+  bool show_deleted = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for Packs.ListPacks, AIP-132 <https://aip.dev/132>.
+message ListPacksResponse {
+  // The packs on this page.
+  repeated Pack packs = 1;
+
+  // Token for the next page, empty when this is the last page.
+  string next_page_token = 2;
+}
+
+// Request message for Packs.CreatePack, AIP-133 <https://aip.dev/133>.
+message CreatePackRequest {
+  // The pack to create.
+  Pack pack = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).required = true
+  ];
+
+  // Client-assigned id, becoming the last segment of the resource name. The
+  // server generates one when empty.
+  string pack_id = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for Packs.UpdatePack, AIP-134 <https://aip.dev/134>.
+message UpdatePackRequest {
+  // The pack to update. Its name field identifies the pack.
+  Pack pack = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).required = true
+  ];
+
+  // Fields to update. An empty mask updates all mutable fields.
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for Packs.DeletePack, AIP-135 <https://aip.dev/135>.
+message DeletePackRequest {
+  // Name of the pack to delete, "packs/{pack}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (buf.validate.field).string.pattern = "^packs/[^/]+$"
+  ];
+}
+
+// Request message for Packs.UndeletePack, AIP-164 <https://aip.dev/164>.
+message UndeletePackRequest {
+  // Name of the soft-deleted pack to restore.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (buf.validate.field).string.pattern = "^packs/[^/]+$"
+  ];
+}
+
+// Request message for Packs.ResolvePack, RFC 8428 section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6>.
+message ResolvePackRequest {
+  // Name of the pack to resolve, "packs/{pack}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (buf.validate.field).string.pattern = "^packs/[^/]+$"
+  ];
+
+  // The instant to read relative times against, as POSIX seconds since the
+  // Unix epoch, RFC 8428 section 4.5.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.3>. The server uses its own clock
+  // when unset.
+  //
+  // A caller supplies this when it, not the server, knows what "now" meant for
+  // this pack -- a batch of readings buffered on a gateway for an hour
+  // resolves against the time they were *taken*, not the time they were
+  // uploaded, and the server has no way to tell the difference. Section 4.5.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.3>
+  // leaves the accuracy of "now" to the surrounding system for exactly this
+  // reason, so the schema takes it as input rather than guessing.
+  //
+  // Named `_value` and typed double for the reason given on
+  // `Record.time_value`: it is the same quantity on the same scale, and a
+  // Timestamp here would silently disagree with the field it is being added
+  // to. Ignored when the pack has no relative time.
+  double reference_time_value = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for Packs.ResolvePack, RFC 8428 section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6>.
+message ResolvePackResponse {
+  // The resolved records, in chronological order.
+  //
+  // No record carries a base field: names are concatenated, base times added,
+  // base units and base values applied, so each record stands alone. That is
+  // what section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6> means by resolved, and why a record may only leave a
+  // Pack in this form.
+  repeated Record records = 1;
+
+  // The pack's Base Version, carried once rather than repeated onto every
+  // record.
+  //
+  // Section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6> is the one place resolution *adds* a field instead of
+  // folding one away: a resolved record must omit Base Version at version 10
+  // and must carry it at every other version. Since section 4.4 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.4> requires
+  // one version for the whole pack, a serialiser copies this onto each record
+  // it writes, and holding it once keeps the records from disagreeing.
+  int32 base_version = 2;
+}

@@ -1,0 +1,89 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.pack.v1;
+
+import "buf/validate/validate.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "protobuf/rfc8428/pack/v1/patch_types.proto";
+import "protobuf/rfc8428/pack/v1/types.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "RecordsMessagesProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.pack.v1";
+
+// Request message for PackRecords.SelectPackRecords, RFC 8790 section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1>.
+message SelectPackRecordsRequest {
+  // Name of the pack to select from, "packs/{pack}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (buf.validate.field).string.pattern = "^packs/[^/]+$"
+  ];
+
+  // The selectors, in order. This is RFC 8790 <https://www.rfc-editor.org/rfc/rfc8790.html>'s Fetch Pack, and like any
+  // SenML pack its order matters: a base name or base time set in one fetch
+  // record applies to the records after it.
+  //
+  // At least one, section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1>: "A Fetch Pack MUST contain at least one
+  // Fetch Record." Capped at 1000, the ceiling used everywhere else here.
+  repeated FetchRecord records = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).repeated = {
+      min_items: 1
+      max_items: 1000
+    }
+  ];
+}
+
+// Response message for PackRecords.SelectPackRecords, RFC 8790 section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1>.
+message SelectPackRecordsResponse {
+  // The matched records, in the order the selectors asked for them.
+  //
+  // Each target record appears **at most once**, section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1>, even when
+  // several fetch records match it. Deduplication is the server's job, not the
+  // caller's.
+  //
+  // An empty list is a successful answer, not an error: section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1> says
+  // an unmatched fetch returns "an empty SenML Pack (i.e., array with no
+  // elements)".
+  repeated Record records = 1;
+}
+
+// Request message for PackRecords.ApplyPackPatch, RFC 8790 section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>.
+message ApplyPackPatchRequest {
+  // Name of the pack to patch, "packs/{pack}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (buf.validate.field).string.pattern = "^packs/[^/]+$"
+  ];
+
+  // The patch records, applied in this order.
+  //
+  // Section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>: "The Patch Records MUST be applied in the same sequence
+  // as they are in the Patch Pack", and concurrent patches must come out
+  // equivalent to some single sequence. Order is not a hint.
+  //
+  // Capped at 1000 per call. A patch is all-or-nothing, so a request that has
+  // to be retried should be small enough to retry.
+  repeated PatchRecord records = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).repeated = {
+      min_items: 1
+      max_items: 1000
+    }
+  ];
+
+  // Weak validator, AIP-154 <https://aip.dev/154>. When set, the patch succeeds only if the pack
+  // is unchanged since it was read.
+  //
+  // Worth setting more often than on an append: a patch matches by name and
+  // time, so a record that arrived since the caller read the pack can turn a
+  // one-target match into a two-target one, which section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2> makes
+  // invalid.
+  string etag = 3 [(google.api.field_behavior) = OPTIONAL];
+}

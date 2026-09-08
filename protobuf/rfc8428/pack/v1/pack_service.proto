@@ -1,0 +1,205 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.pack.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/protobuf/empty.proto";
+import "protobuf/rfc8428/pack/v1/pack.proto";
+import "protobuf/rfc8428/pack/v1/pack_messages.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "PackServiceProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.pack.v1";
+
+// Packs manages SenML Packs, RFC 8428 <https://www.rfc-editor.org/rfc/rfc8428.html>.
+//
+// A pack is stored as it arrived, base fields and relative times intact, and
+// is served the same way. Resolution (section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6>) is a method here rather
+// than something Create does on the way in, because it is lossy in one
+// direction that matters: a relative time resolved on arrival records when the
+// server received the pack, which section 4.5.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.3> warns can be minutes out
+// from when the reading was taken. Storing the pack unresolved keeps that
+// decision with the caller who knows the answer.
+//
+// The four wire encodings -- senml+json, senml+cbor, senml+xml and senml-exi,
+// section 12.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.3> -- are not methods here. They are codecs registered
+// against "protobufrfc.dev/Pack" and moved by
+// `protobuf.shared.interchange.v1.Interchange`, so a new encoding is a codec
+// registration rather than a change to this service.
+//
+// **Whole packs only.** Reading and writing *parts* of a pack is RFC 8790 <https://www.rfc-editor.org/rfc/rfc8790.html>'s
+// FETCH and PATCH, and lives next door in `PackRecords`. The split is rule 2's
+// -- one `service` block cannot span files and neither service fits in 250
+// lines with the other -- but it lands on a real seam: this service treats a
+// pack as one document, and that one addresses the records inside it.
+service Packs {
+  // Retrieves one pack.
+  //
+  //   GET /v1/{name=packs/*}
+  //
+  // Safe and idempotent. Returns the pack as stored, which means unresolved if
+  // that is how it arrived -- call ResolvePack for the normalised form. Read
+  // the `etag` here and pass it back on update or delete to make the write
+  // conditional.
+  //
+  //   NOT_FOUND          no such pack, or it is soft-deleted and `show_deleted` was not set
+  //   INVALID_ARGUMENT   name does not match packs/*
+  //   PERMISSION_DENIED  caller may not read it
+  rpc GetPack(GetPackRequest) returns (Pack) {
+    option (google.api.http) = {get: "/v1/{name=packs/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists packs.
+  //
+  //   GET /v1/packs
+  //
+  // Paginated per AIP-158: pass `page_size` (defaults to 50, capped at 1000)
+  // and the `next_page_token` from the previous response. An empty
+  // `next_page_token` means the last page. Page tokens are opaque and may
+  // expire; do not construct or store them.
+  //
+  // Filtering uses the AIP-160 expression language over the pack's own fields.
+  // `resolved = true` is the query an archive wants, since section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6>'s
+  // normalised form is what bulk processing consumes. Filtering by sensor
+  // means matching the name strings inside `records`, which a filter cannot
+  // see into -- resolve first, or keep an index outside this API. Results
+  // carry no guaranteed order.
+  //
+  //   INVALID_ARGUMENT   malformed filter, or page_size out of range
+  //   PERMISSION_DENIED  caller may not list this collection
+  rpc ListPacks(ListPacksRequest) returns (ListPacksResponse) {
+    option (google.api.http) = {get: "/v1/packs"};
+  }
+
+  // Creates a pack.
+  //
+  //   POST /v1/packs
+  //   body: the pack itself
+  //
+  // Server-assigned fields on the request body are ignored: `name`, `uid`,
+  // `etag`, `resolved` and the timestamps are set by the server regardless of
+  // what is sent. Supply `pack_id` to choose the final path segment; leave it
+  // empty and the server generates one.
+  //
+  // `records` is stored verbatim, in the order given. The server does not
+  // reorder, resolve or fold base fields -- see the service comment.
+  //
+  // Not idempotent. Retrying after a timeout may create a second pack; supply
+  // `pack_id` if the caller needs retry safety.
+  //
+  //   ALREADY_EXISTS     that pack_id is taken
+  //   INVALID_ARGUMENT   a field violates its buf.validate constraint, or `records` is empty
+  //   PERMISSION_DENIED  caller may not create here
+  rpc CreatePack(CreatePackRequest) returns (Pack) {
+    option (google.api.http) = {
+      post: "/v1/packs"
+      body: "pack"
+    };
+    option (google.api.method_signature) = "pack,pack_id";
+  }
+
+  // Updates a pack.
+  //
+  //   PATCH /v1/{pack.name=packs/*}
+  //   body: the pack itself
+  //
+  // A partial update: only fields named in `update_mask` are written. An empty
+  // mask writes every mutable field, which will clear anything the caller left
+  // unset -- pass a mask unless that is the intent. OUTPUT_ONLY and IMMUTABLE
+  // fields are rejected rather than silently dropped.
+  //
+  // `records` replaces wholesale when masked; there is no append. A record's
+  // base fields govern the records after it (section 4.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.1>), so merging a
+  // partial list into a stored one would change the meaning of records the
+  // caller never sent.
+  //
+  // Idempotent. Pass the `etag` read from Get to make the write conditional.
+  //
+  //   NOT_FOUND          no such pack
+  //   ABORTED            etag does not match the stored pack
+  //   INVALID_ARGUMENT   mask names an unknown or immutable field
+  //   PERMISSION_DENIED  caller may not modify it
+  rpc UpdatePack(UpdatePackRequest) returns (Pack) {
+    option (google.api.http) = {
+      patch: "/v1/{pack.name=packs/*}"
+      body: "pack"
+    };
+    option (google.api.method_signature) = "pack,update_mask";
+  }
+
+  // Deletes a pack.
+  //
+  //   DELETE /v1/{name=packs/*}
+  //
+  // Soft delete: the pack is marked deleted, disappears from List unless
+  // `show_deleted` is set, and is purged at `expire_time`. Recover it with
+  // Undelete before then.
+  //
+  // Idempotent in effect but not in reporting: a second delete returns
+  // NOT_FOUND rather than succeeding silently.
+  //
+  //   NOT_FOUND          no such pack
+  //   ABORTED            etag does not match
+  //   PERMISSION_DENIED  caller may not delete it
+  rpc DeletePack(DeletePackRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/{name=packs/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Restores a soft-deleted pack.
+  //
+  //   POST /v1/{name=packs/*}:undelete
+  //
+  // Valid only before `expire_time`; after that the pack is gone and this
+  // returns NOT_FOUND. Clears `delete_time` and `expire_time` and returns the
+  // pack as it was.
+  //
+  //   NOT_FOUND          no such pack, or already purged
+  //   ALREADY_EXISTS     the pack is not deleted
+  //   PERMISSION_DENIED  caller may not restore it
+  rpc UndeletePack(UndeletePackRequest) returns (Pack) {
+    option (google.api.http) = {
+      post: "/v1/{name=packs/*}:undelete"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Normalises a pack into resolved records, RFC 8428 section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6>.
+  //
+  //   POST /v1/{name=packs/*}:resolve
+  //   body: the whole request message
+  //
+  // A custom method (AIP-136) rather than a `shared/v1` capability, because
+  // resolution is not cross-cutting the way export and search are: it is
+  // defined by section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6> for this format alone, and no other resource in
+  // this schema has base fields to fold away. That is rule 7's test, and the
+  // same one ExpandEvent passes for recurrence rules.
+  //
+  // Concatenates each name onto the base name in force, adds base times to
+  // times, applies base units and base values, converts relative times against
+  // `reference_time_value`, and returns the records in chronological order.
+  // Nothing is written: the stored pack is untouched and `resolved` stays as
+  // it was. Resolved records are also the only form in which a record may
+  // leave its pack, since an unresolved one means nothing on its own.
+  //
+  // Safe and idempotent given the same `reference_time_value`. Without one the
+  // server reads its own clock, so two calls on a pack holding relative times
+  // return different absolute times -- supply the reference when that matters.
+  //
+  //   NOT_FOUND          no such pack
+  //   INVALID_ARGUMENT   a record's base and regular time sum past 2**28 and flips a relative time absolute
+  //   PERMISSION_DENIED  caller may not read it
+  rpc ResolvePack(ResolvePackRequest) returns (ResolvePackResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=packs/*}:resolve"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+}

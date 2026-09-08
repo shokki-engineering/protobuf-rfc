@@ -96,6 +96,10 @@ Which of these is canonical and which is a legacy format is rule 14, in
 | 9865 | SCIM cursor-based pagination | https://www.rfc-editor.org/rfc/rfc9865.html |
 | 9967 | SCIM security event tokens | https://www.rfc-editor.org/rfc/rfc9967.html |
 | 8984 | JSCalendar — deferred, 2.0 pending | https://www.rfc-editor.org/rfc/rfc8984.html |
+| 8428 | SenML, the sensor measurement model | https://www.rfc-editor.org/rfc/rfc8428.html |
+| 9100 | SenML features and versions, updates 8428 | https://www.rfc-editor.org/rfc/rfc9100.html |
+| 8798 | Additional SenML units, and the Secondary Units subregistry | https://www.rfc-editor.org/rfc/rfc8798.html |
+| 8790 | FETCH and PATCH with SenML | https://www.rfc-editor.org/rfc/rfc8790.html |
 
 ### Updates to the legacy models
 
@@ -112,6 +116,7 @@ Tracked so conversion stays lossless; see rule 14.
 | 7953 | Calendar availability (VAVAILABILITY) | https://www.rfc-editor.org/rfc/rfc7953.html |
 | 8288 | Web linking, the LINKREL registry | https://www.rfc-editor.org/rfc/rfc8288.html |
 | 6578 | WebDAV collection sync — the `sync-token` CalDAV and CardDAV use | https://www.rfc-editor.org/rfc/rfc6578.html |
+| 6690 | CoRE Link Format — the out-of-band sensor metadata RFC 8428 §4.7 points at | https://www.rfc-editor.org/rfc/rfc6690.html |
 
 ### Legacy models and supporting formats
 

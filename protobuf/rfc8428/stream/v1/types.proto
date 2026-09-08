@@ -1,0 +1,220 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.stream.v1;
+
+import "buf/validate/validate.proto";
+import "google/api/field_behavior.proto";
+import "google/protobuf/duration.proto";
+import "protobuf/rfc8428/stream/v1/extension.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "TypesProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.stream.v1";
+
+// Record is one SenML Record: a single measurement or configuration instance
+// in time, RFC 8428 section 4 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4>.
+//
+// A record carries two kinds of field. **Base fields** (section 4.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.1>, the
+// `base_` prefix here) apply to this record and to every record after it in
+// the Pack, up to but not including the next record carrying that same base
+// field. **Regular fields** (section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>) apply only to the record they
+// appear in. Both kinds may appear in any record.
+//
+// A record is therefore not self-describing: reading one in isolation gives
+// the wrong sensor, the wrong time and possibly the wrong unit, because the
+// base values that complete it live in an earlier sibling. Section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6> calls
+// a record with the base values already folded in **resolved**, and
+// `Streams.ResolveStream` is that operation.
+//
+// One measurement per record, deliberately: section 4.5.4 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.4> says values
+// measured together -- air pressure and altitude, latitude and longitude --
+// belong in separate records correlated by their time, not in one record with
+// several values.
+//
+//
+// A copy of `protobuf.rfc8428.pack.v1.Record`, not a reference to it. AIP-215 <https://aip.dev/215>
+// permits no cross-package message reference and rule 4 forbids a shared
+// wrapper package, so a value type used by two packages is defined in each.
+// SenSML uses the same records as SenML -- section 4.8 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8> changes only how
+// they are delivered and how their relative times resolve -- so the two
+// definitions must stay byte-identical apart from the package. Keep them in
+// step when either changes.
+//
+// Reference: RFC 8428 "Sensor Measurement Lists (SenML)", section 4.
+// https://www.rfc-editor.org/rfc/rfc8428.html#section-4
+message Record {
+  // Section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>: exactly one value field must appear unless the record
+  // carries a sum, in which case none need appear.
+  //
+  // The trailing clause exempts a record that sets base fields and no regular
+  // one, because RFC 8428 contradicts itself here and only that reading fits
+  // all three statements. Section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2> says a value is required; section 5.1.7 <https://www.rfc-editor.org/rfc/rfc8428.html#section-5.1.7>
+  // opens an actuation pack with `[{"bn":"urn:dev:ow:10e2073a01080063:"}, ...]`,
+  // a record holding nothing but a base name; and section 11 <https://www.rfc-editor.org/rfc/rfc8428.html#section-11>'s CDDL marks
+  // the whole value group optional. The single erratum against this document
+  // is editorial and does not touch it. A record carrying base fields alone
+  // measures nothing -- it exists to set values for the records after it,
+  // per section 4.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.1> -- so the requirement is read as applying to records
+  // that claim to be measurements. Rejecting the RFC's own example is not an
+  // option available here.
+  option (buf.validate.message).cel = {
+    id: "record.value_or_sum"
+    message:
+      "a record needs a value unless it carries a sum or sets only base "
+      "fields (RFC 8428 section 4.2)"
+    expression:
+      "has(this.number_value) || has(this.string_value) || "
+      "has(this.boolean_value) || has(this.data_value) || "
+      "has(this.sum) || has(this.base_sum) || "
+      "(this.sensor_id == '' && this.unit == '' && this.time_value == 0.0 "
+      "&& !has(this.update_duration))"
+  };
+
+  // Base Name (bn), section 4.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.1>. Prepended to `sensor_id` in this and
+  // every following record, e.g. "urn:dev:ow:10e2073a01080063:".
+  //
+  // Named base_sensor_id, not base_name: AIP-122 <https://aip.dev/122> bans the `_name` suffix on
+  // everything but display_name, given_name and family_name. `id` rather than
+  // `identifier` is AIP-140 <https://aip.dev/140>, and section 4.5.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.1> is explicit that the
+  // concatenation "must result in a globally unique identifier".
+  //
+  // The character set is section 4.5.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.1>'s, which constrains the
+  // *concatenated* name: it must start with an alphanumeric and continue with
+  // "-", ":", ".", "/" and "_". Only the leading record of a run can be
+  // checked for that first character, so the rule is enforced here, on the
+  // field that begins the concatenation, and documented on `sensor_id`, which
+  // cannot see whether a base name precedes it.
+  string base_sensor_id = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).string.pattern = "^[A-Za-z0-9][-:./_A-Za-z0-9]*$",
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+
+  // Base Time (bt), section 4.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.1>. Added to `time_value` in this and every
+  // following record. Seconds, with the two-regime reading described on
+  // `time_value`.
+  //
+  // Named base_time_value, not base_time: AIP-142 <https://aip.dev/142> requires a `_time` field to
+  // be a google.protobuf.Timestamp, and this is a double that is only
+  // sometimes an absolute instant. The `_value` escape is the one `date_value`
+  // already took in rfc9553/card.
+  double base_time_value = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Base Unit (bu), section 4.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.1>. The unit assumed for this and every
+  // following record that carries no `unit` of its own, section 4.5.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.2>.
+  string base_unit = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Base Value (bv), section 4.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.1>. Added to `number_value` in this and
+  // every following record. Absent is zero, section 4.5.4 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.4>, so no explicit
+  // presence is needed here.
+  double base_value = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Base Sum (bs), section 4.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.1>. Added to `sum` in this and every
+  // following record.
+  //
+  // Explicitly optional, unlike `base_value` above, because section 4.5.4 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.4>
+  // treats absence and zero differently here: a missing Base Sum next to a
+  // present Sum counts as zero, but a record with *neither* has no sum at all,
+  // and that is what decides whether section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2> still demands a value.
+  optional double base_sum = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Name (n), section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>. Appended to the `base_sensor_id` in force,
+  // e.g. "voltage". Section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2> permits this to name a parameter or an
+  // actuator as well as a sensor; section 4.9 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.9> is the actuation case.
+  //
+  // Named sensor_id, not name: a field called `name` makes api-linter treat
+  // the enclosing message as a resource, which `Record` is not -- the same
+  // rename vCard's N took to `name_components`.
+  //
+  // The pattern here is section 4.5.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.1>'s continuation set, without the
+  // leading-alphanumeric rule: this field is usually a suffix, so "voltage"
+  // and ":current" are both legal halves of a legal whole. When no base name
+  // is in force it carries the whole name and must satisfy the leading rule
+  // too, which no per-field constraint can see -- a codec checks the
+  // concatenation.
+  string sensor_id = 6 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).string.pattern = "^[-:./_A-Za-z0-9]*$",
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+
+  // Unit (u), section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>, e.g. "Cel", "%RH", "V". Falls back to the
+  // `base_unit` in force when unset, section 4.5.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.2>; having neither is
+  // allowed and leaves the unit to the application.
+  //
+  // Free text, not an enum. Section 12.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1> points at the IANA "SenML Units"
+  // registry, which RFC 8798 <https://www.rfc-editor.org/rfc/rfc8798.html> has already extended and which grows by expert
+  // review, so a closed list here would reject units registered after this
+  // schema shipped. Same call `Resource.resource_types` made in rfc9073.
+  string unit = 7 [(google.api.field_behavior) = OPTIONAL];
+
+  // Sum (s), section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>. The integrated sum of the values over time, in
+  // `unit` multiplied by seconds. Named "sum" rather than "integral" for
+  // historical reasons, which section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2> notes itself.
+  //
+  // Explicitly optional for the reason given on `base_sum`.
+  optional double sum = 8 [(google.api.field_behavior) = OPTIONAL];
+
+  // Time (t), section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>. When the value was recorded, added to the
+  // `base_time_value` in force.
+  //
+  // Seconds, and read two ways depending on magnitude, section 4.5.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.3>:
+  // below 2**28 (268435456) it is relative to "now" -- zero meaning the sensor
+  // has no clock and the reading is roughly now, negative meaning seconds
+  // ago -- and at or above 2**28 it is absolute POSIX seconds since the Unix
+  // epoch, so the smallest absolute value expressible is 1978-07-04T21:24:16Z.
+  // Because base and regular are summed, a pair of relative values can drift
+  // over 2**28 and silently become absolute; section 4.5.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.3> warns about
+  // exactly that.
+  //
+  // Not a google.protobuf.Timestamp, and named `_value` rather than `_time`
+  // to keep AIP-142 <https://aip.dev/142> from demanding one: a relative time has no instant to
+  // put in a Timestamp until a reader supplies "now", and section 4.5.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.3>
+  // leaves the accuracy of "now" to the surrounding system. Resolving to
+  // absolute time is `Streams.ResolveStream`'s job, and section 4.5.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.5.3> expects
+  // it to happen before anything is archived.
+  double time_value = 9 [(google.api.field_behavior) = OPTIONAL];
+
+  // Update Time (ut), section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>. The longest a consumer should wait
+  // before this sensor provides a fresh reading; a longer silence means the
+  // sensor or the path to it has failed.
+  //
+  // A google.protobuf.Duration, where every other time-ish field here is a
+  // double: section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2> defines this one as a period of seconds outright,
+  // with none of `time_value`'s relative-or-absolute ambiguity, and AIP-142 <https://aip.dev/142>
+  // requires a `_duration` field to be a Duration.
+  google.protobuf.Duration update_duration = 10 [(google.api.field_behavior) = OPTIONAL];
+
+  // The measurement itself, section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>. Exactly one form appears, and
+  // one must appear unless the record carries a sum.
+  oneof value {
+    // Value (v), section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>. Added to the `base_value` in force.
+    double number_value = 11;
+
+    // String Value (vs), section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>, e.g. "Machine Room".
+    string string_value = 12;
+
+    // Boolean Value (vb), section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>.
+    bool boolean_value = 13;
+
+    // Data Value (vd), section 4.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.2>. Arbitrary octets.
+    //
+    // Held decoded. Section 4.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.3> carries this base64url-encoded without
+    // padding in JSON and XML and as a definite-length byte string in CBOR; a
+    // protobuf `bytes` field is already binary, so re-encoding it would store
+    // one of those two spellings and make the other lossy. Same treatment
+    // `StructuredData.binary` gives ENCODING=BASE64 in rfc9073.
+    bytes data_value = 14;
+  }
+
+  // Fields this schema does not model, section 4.4 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.4>.
+  //
+  // SenML is extensible by design and section 4.4 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.4> *requires* a reader to
+  // ignore labels it does not recognise, so dropping them is non-conforming
+  // rather than merely lossy. Anything registered in the "SenML Labels"
+  // registry after this schema shipped arrives here and round-trips intact.
+  repeated ExtensionField extensions = 15 [(google.api.field_behavior) = OPTIONAL];
+}

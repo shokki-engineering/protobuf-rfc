@@ -104,6 +104,7 @@ into every package. Adopted so far:
 | `Date` (via `DateOrText`) | `Contact.birthday`/`anniversary`, `BDAY` §6.2.5 / `ANNIVERSARY` §6.2.6 | year 0 means "no year", which is the common case in address books and which `Timestamp` cannot express |
 | `LatLng` | `Event.position`, `GEO` §3.8.1.6 | fits iCalendar's `lat;lon` exactly; vCard's §6.5.2 is a `geo:` URI and needs parsing first -- still queued there |
 | `Interval` | `ExpandEventRequest.window`, `QueryFreeBusyRequest.window` | a request-scoped time window, not a resource field -- rejected for `Event` itself, see below |
+| `Fraction` | `Unit.scale`, `Unit.offset`, RFC 8798 §3 | the registry defines both as **rational numbers** and writes half of them as fractions -- 1/1000, 1/3600000. A double holds none of those exactly, and a unit conversion wrong in the last bits is worse than one obviously wrong |
 
 | Type | For | Why not |
 |---|---|---|
@@ -113,7 +114,7 @@ into every package. Adopted so far:
 | `LocalizedText` | `display_names`, `descriptions` | vCard and LDAP carry multi-valued properties with a `LANGUAGE` parameter, not one string plus one tag. Would need `repeated LocalizedText` *and* still lose the other parameters |
 | `CalendarPeriod` | `Recurrence.frequency` | DAY/WEEK/MONTH/QUARTER — no SECONDLY, MINUTELY or HOURLY, and it has FORTNIGHT and HALF which RRULE has no concept of |
 | `TimeOfDay` | — | nothing in these RFCs is a wall-clock time divorced from a date |
-| `Decimal`, `Money`, `Fraction`, `Color`, `Quaternion`, `Expr` | — | no field in any of these RFCs is a number of that kind |
+| `Decimal`, `Money`, `Color`, `Quaternion`, `Expr` | — | no field in any of these RFCs is a number of that kind. `Fraction` was on this row until RFC 8798 §3 turned up two, and is now adopted above -- the row was a statement about the RFCs in scope, not about the type |
 
 Fidelity to the RFC outranks reuse. That is the tie-break, and it is why the
 first two are rejected despite looking like obvious matches.
@@ -132,20 +133,26 @@ Nothing here is blocked. Each waits on a consumer that needs it typed.
 | `RRULE` on `Todo` | 5545 | recurring todos; forces the duplication tax in `decisions.md` |
 | `ATTENDEE` on `Todo`/`Journal` | 5545 | same duplication cost |
 | `SOURCE` §6.1.3, `GENDER` §6.2.7, GEO parameters, `LOGO` §6.6.3, `SOUND` §6.7.5, `CLIENTPIDMAP` §6.7.7, `FBURL` §6.9.1, `CALADRURI` §6.9.2, `CALURI` §6.9.3 | 6350 | no consumer has asked; `PRODID`/`REV` are arguably already covered -- `REV` is `update_time`, `PRODID` describes the exporter, not the contact |
+| labels registered after §12.2 | 8428 | they arrive in `Record.extensions` and round-trip; typing one needs a consumer filtering on it |
 | `telephoneNumber` §2.35, `l` §2.16, `st` §2.33, `street` §2.34, `postalCode` §2.24 | 4519 | on `Organization` and `OrganizationalUnit`; together they restate `Contact.Address` from `rfc6350/v1`, which rule 4 forbids sharing, so add only when actually needed |
 
 ## What still needs building, not just typing
 
-Nothing currently. `Resource` was the last one -- RFC 9073 §7.3's VRESOURCE,
-promoted from a value object on `Event` to `rfc9073/resource/v1` with full
-CRUD, because a catalogue of bookable things is addressed, listed and deleted
-independently of any booking. That is route 3 above, and the value object on
-`Event` stays: §7.3 serves both uses and neither replaces the other.
+Nothing currently. SenML was the last run, and it went in four pieces:
+`rfc8428/pack` (the Pack, plus RFC 8790's record-level access as a second
+service), `rfc8428/stream` (SenSML, §4.8), `rfc8428/unit` (§12.1's registry as
+amended by RFC 8798 §3) and `rfc8428/sensor` (native -- see `decisions.md`).
 
-Before it, CalDAV, CardDAV and `OrganizationalUnit`; what remains of RFC 4519
-is either in "what is queued" above or in `decisions.md`'s "Deliberately not
-built" (`person`, `country`, `locality`, `groupOfUniqueNames`).
+Three of the four were on this file's deferred list first, and what moved them
+is recorded in `decisions.md` under "Built after being deferred". The pattern
+worth keeping: each was promoted on a data argument, not a completeness one.
+`Stream` earned its package because §4.8 resolves relative times per record
+rather than per pack, `Unit` because RFC 8798 §4 asks implementations to hold
+their own registry copy, and RFC 8790 because a field mask addresses fields
+where FETCH addresses content.
 
-All five codecs are built, so a round trip is the acceptance test for
-everything above rather than a thing to build. What the codecs caught is in
-[`codec-findings.md`](codec-findings.md).
+Before those, `Resource` -- RFC 9073 §7.3's VRESOURCE, promoted from a value
+object on `Event` to `rfc9073/resource/v1` with full CRUD, because a catalogue
+of bookable things is addressed, listed and deleted independently of any
+booking. That is route 3 above, and the value object on `Event` stays: §7.3
+serves both uses and neither replaces the other.

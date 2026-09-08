@@ -1,0 +1,101 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.sensor.v1;
+
+import "buf/validate/validate.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/field_mask.proto";
+import "protobuf/rfc8428/sensor/v1/sensor.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "MessagesProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.sensor.v1";
+
+// Request message for Sensors.GetSensor, AIP-131 <https://aip.dev/131>.
+message GetSensorRequest {
+  // Name of the sensor to retrieve, "sensors/{sensor}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Sensor",
+    (buf.validate.field).string.pattern = "^sensors/[^/]+$"
+  ];
+}
+
+// Request message for Sensors.ListSensors, AIP-132 <https://aip.dev/132>.
+message ListSensorsRequest {
+  // Maximum sensors to return. Defaults to 50, capped at 1000.
+  int32 page_size = 1 [
+    (google.api.field_behavior) = OPTIONAL,
+    (buf.validate.field).int32 = {
+      gte: 0
+      lte: 1000
+    }
+  ];
+
+  // Page token from a previous ListSensorsResponse.next_page_token.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression, AIP-160 <https://aip.dev/160>.
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Include soft-deleted sensors in the result. AIP-164 <https://aip.dev/164>.
+  bool show_deleted = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for Sensors.ListSensors, AIP-132 <https://aip.dev/132>.
+message ListSensorsResponse {
+  // The sensors on this page.
+  repeated Sensor sensors = 1;
+
+  // Token for the next page, empty when this is the last page.
+  string next_page_token = 2;
+}
+
+// Request message for Sensors.CreateSensor, AIP-133 <https://aip.dev/133>.
+message CreateSensorRequest {
+  // The sensor to create.
+  Sensor sensor = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).required = true
+  ];
+
+  // Client-assigned id, becoming the last segment of the resource name. The
+  // server generates one when empty.
+  string sensor_id = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for Sensors.UpdateSensor, AIP-134 <https://aip.dev/134>.
+message UpdateSensorRequest {
+  // The sensor to update. Its name field identifies the sensor.
+  Sensor sensor = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).required = true
+  ];
+
+  // Fields to update. An empty mask updates all mutable fields.
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for Sensors.DeleteSensor, AIP-135 <https://aip.dev/135>.
+message DeleteSensorRequest {
+  // Name of the sensor to delete, "sensors/{sensor}".
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Sensor",
+    (buf.validate.field).string.pattern = "^sensors/[^/]+$"
+  ];
+}
+
+// Request message for Sensors.UndeleteSensor, AIP-164 <https://aip.dev/164>.
+message UndeleteSensorRequest {
+  // Name of the soft-deleted sensor to restore.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference).type = "protobufrfc.dev/Sensor",
+    (buf.validate.field).string.pattern = "^sensors/[^/]+$"
+  ];
+}

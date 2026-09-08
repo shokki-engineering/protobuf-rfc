@@ -94,7 +94,10 @@ consumer needs them, not to complete the table.
 
 ## The catalogue
 
-RFC vocabulary and AIP rules disagree in six places, resolved as follows.
+RFC vocabulary and AIP rules disagree wherever a name is load-bearing.
+Every collision hit so far, and how it was resolved. The last two are method
+names rather than fields; the mechanism is the same and so is the obligation
+to record it.
 
 | RFC property | Field | Why |
 |---|---|---|
@@ -112,6 +115,12 @@ RFC vocabulary and AIP rules disagree in six places, resolved as follows.
 | JSContact `prodId` §2.1.7 | `product_id` | AIP-140 requires the `id` abbreviation over `identifier` |
 | JSContact `date` §2.8.1 | `date_value` | AIP-142 reads a bare `date` as a Timestamp field, which it is not |
 | JSContact `utc` §2.8.1 | `utc_time` | AIP-142 requires a Timestamp field to end in `_time` |
+| SenML `bn` §4.1 | `base_sensor_id` | AIP-122's `_name` ban again; AIP-140 takes `id` over `identifier`, and §4.5.1 calls the concatenation an identifier outright |
+| SenML `n` §4.2 | `sensor_id` | a field called `name` makes api-linter treat `Record` as a resource; same rename vCard's N took |
+| SenML `bt`, `t` §4.1-4.2 | `base_time_value`, `time_value` | AIP-142 requires a `_time` field to be a Timestamp. SenML's is a double that is absolute only above 2**28 and relative to "now" below it |
+| SenML FETCH §3.1 (RFC 8790) | `SelectPackRecords` | AIP-131 reserves `Fetch` as a synonym for `Get`; §3.1's own word for what it does is *select* |
+| SenML PATCH/iPATCH §3.2 (RFC 8790) | `ApplyPackPatch` | AIP-134 reserves `Patch` as a synonym for `Update`; §3.2 speaks of patch records being *applied* |
+| SenML `ut` §4.2 | `update_duration` | §4.2 defines a period of seconds, so AIP-142 wants a Duration and the `_duration` suffix -- the one time field here that is unambiguous |
 
 Resource names collide too, across lineages rather than within a file. Under
 rule 14 the canonical layer keeps the plain name and the legacy one is named

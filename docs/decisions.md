@@ -81,10 +81,66 @@ marked DONE, which is the convention those files themselves set.
 - **`groupOfUniqueNames` (§3.6).** `Membership`'s own comment documents why:
   `uniqueMember` (§2.40) appends a UID to a DN so a reused name does not
   inherit an old membership, and `Membership.uid` solves that more directly.
+- **RFC 8428 section 9's fragment identification.** The "rec=3,5" URI fragment
+  that selects records by position, and RFC 8790 section 4 reuses it. A URI
+  syntax for addressing into a document, not data -- rule 4's "an RFC defining
+  a string format contributes a comment on a field, not a package". Selecting
+  records by *content* is `PackRecords.SelectPackRecords`, which is what a
+  caller actually wants; selecting the third record of a pack is a position
+  that changes whenever the pack does.
+- **A conversion method on `Units`.** RFC 8798 section 3 gives the arithmetic --
+  multiply by scale, add offset -- and `Unit` carries both numbers as exact
+  `google.type.Fraction`s, so a client converts locally. A `ConvertUnit` RPC
+  would be a network round trip to do one multiplication, and rule 7 keeps
+  resource services at the standard methods without a reason that applies to
+  that resource alone.
+- **Validating a record's `unit` against the `Units` registry.** RFC 8428
+  section 4.5.2 permits a record with no unit at all and leaves anything it
+  does not recognise to the application, so `Packs.CreatePack` never consults
+  `Units`. Rejecting a pack for an unregistered unit would fail closed on the
+  ordinary case of a registry copy lagging IANA.
+- **Validating a pack's sensor names against `Sensors`.** Same shape: devices
+  report before anyone catalogues them, so a pack naming an unregistered sensor
+  is ordinary. The join is a string lookup on `senml_id`, in whichever
+  direction the caller needs.
+
 - **A published codec library.** `codec/go` is a conformance test and says so
   in its own module comment. Turning it into a product is a different project
   with a different support burden.
 
+
+## Built after being deferred
+
+Four things this file previously listed as not built now are, at the owner's
+direction. Kept here because each was deferred with a reason, and the reason
+is what changed:
+
+- **`Sensor`** -- deferred because RFC 8428 section 4.7 declines to define a
+  sensor and rule 4 says an RFC defining a string format earns no package. It
+  is built and it is still native: every field on it is ours or RFC 6690's.
+  What changed is where it sits. It is under `rfc8428/`, which **rule 5
+  forbids for a native type**, so rule 5 now carries a written exception --
+  *meaningless apart from that RFC* -- and `CLAUDE.md` records both the
+  exception and the test that keeps it from spreading. `Project` is the
+  control case: related to `Group`, and still in `shared/`.
+- **`Stream`** -- deferred as a transmission mode rather than a resource. Built,
+  and the argument that carried it is `StreamRecord`: section 4.8 resolves a
+  relative time against when each *record* was sent, where a pack has one
+  instant for all of them. Storing a stream as a pack collapses those and moves
+  every reading in it. That is a data difference, not a delivery one.
+- **`Unit`** -- deferred as a registry rather than data. Built, because RFC 8798
+  section 4 asks for exactly this: the subregistry "is amenable to automatic
+  interpretation, by making use of the scale and offset columns", and
+  implementations SHOULD receive updates "via common repositories" instead of
+  polling IANA. A deployment-owned, addressable copy is that repository. The
+  enum this file rejected is still rejected -- `unit` stays a string.
+- **RFC 8790's FETCH and PATCH** -- deferred as a transport concern duplicating
+  `UpdatePack`. Built as `PackRecords`, and the duplication argument was wrong:
+  a field mask names fields, so the finest it reaches is "replace all records",
+  while RFC 8790 selects by *content*. Different addressing, not finer. It got
+  no directory -- rule 6 gives those to defining RFCs, and 8790 refines Pack
+  access -- and no method keeps its RFC name, because AIP-131 and AIP-134
+  reserve `Fetch` and `Patch` as synonyms for `Get` and `Update`.
 
 ## The AIP-215 duplication tax
 

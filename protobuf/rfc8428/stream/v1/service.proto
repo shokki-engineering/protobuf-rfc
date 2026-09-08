@@ -1,0 +1,227 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.stream.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/protobuf/empty.proto";
+import "protobuf/rfc8428/stream/v1/messages.proto";
+import "protobuf/rfc8428/stream/v1/stream.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "ServiceProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.stream.v1";
+
+// Streams manages Sensor Streaming Measurement Lists, RFC 8428 section 4.8 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8>.
+//
+// The same surface `Packs` offers, plus an append: a stream grows after it is
+// created, and section 4.8 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8> ties each record's "now" to when that record was
+// sent, so the order it grew in is part of the data.
+//
+// The four sensml media types (section 12.3.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.3.2> onward) are codecs
+// registered against "protobufrfc.dev/Stream" in `shared/interchange/v1`, kept
+// separate from the four senml types registered against
+// "protobufrfc.dev/Pack". A consumer asking for "application/sensml+json" is
+// asking for stream semantics, and serving it a pack would answer a different
+// question.
+service Streams {
+  // Retrieves one stream, with every record received so far.
+  //
+  //   GET /v1/{name=streams/*}
+  //
+  // Safe, but idempotent only for a closed stream: a live one grows between
+  // calls, and that is the intended behaviour rather than a race. Read the
+  // `etag` here and pass it back to make a later write conditional.
+  //
+  //   NOT_FOUND          no such stream, or it is soft-deleted and `show_deleted` was not set
+  //   INVALID_ARGUMENT   name does not match streams/*
+  //   PERMISSION_DENIED  caller may not read it
+  rpc GetStream(GetStreamRequest) returns (Stream) {
+    option (google.api.http) = {get: "/v1/{name=streams/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists streams.
+  //
+  //   GET /v1/streams
+  //
+  // Paginated per AIP-158: pass `page_size` (defaults to 50, capped at 1000)
+  // and the `next_page_token` from the previous response. An empty
+  // `next_page_token` means the last page. Page tokens are opaque and may
+  // expire; do not construct or store them.
+  //
+  // Filtering uses the AIP-160 expression language over the stream's own
+  // fields. `closed = false` is the query that matters most here -- it is the
+  // list of streams still expected to produce data, which is what a monitor
+  // watches. Results carry no guaranteed order.
+  //
+  //   INVALID_ARGUMENT   malformed filter, or page_size out of range
+  //   PERMISSION_DENIED  caller may not list this collection
+  rpc ListStreams(ListStreamsRequest) returns (ListStreamsResponse) {
+    option (google.api.http) = {get: "/v1/streams"};
+  }
+
+  // Opens a stream with its first records.
+  //
+  //   POST /v1/streams
+  //   body: the stream itself
+  //
+  // Server-assigned fields on the request body are ignored: `name`, `uid`,
+  // `etag` and the timestamps are set by the server regardless of what is
+  // sent. Supply `stream_id` to choose the final path segment; leave it empty
+  // and the server generates one.
+  //
+  // At least one record is required, matching section 3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-3>'s definition of a
+  // stream. Everything after the first arrives through AppendStreamRecords,
+  // not through Update.
+  //
+  // Not idempotent. Retrying after a timeout may open a second stream; supply
+  // `stream_id` if the caller needs retry safety.
+  //
+  //   ALREADY_EXISTS     that stream_id is taken
+  //   INVALID_ARGUMENT   a field violates its buf.validate constraint, or `records` is empty
+  //   PERMISSION_DENIED  caller may not create here
+  rpc CreateStream(CreateStreamRequest) returns (Stream) {
+    option (google.api.http) = {
+      post: "/v1/streams"
+      body: "stream"
+    };
+    option (google.api.method_signature) = "stream,stream_id";
+  }
+
+  // Adds records to the end of a stream.
+  //
+  //   POST /v1/{name=streams/*}:append
+  //   body: the whole request message
+  //
+  // A custom method (AIP-136) because a stream is the one resource here that
+  // is defined by growing. Section 4.8 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8> has data "collected over time and
+  // continuously added to the object", and Update cannot express that: a field
+  // mask replaces `records` wholesale, so appending through it means sending
+  // every record already stored and hoping nothing arrived in between. That is
+  // rule 7's test -- no other resource in this schema grows this way.
+  //
+  // Records are appended in the order given, after everything already present.
+  // All-or-nothing: a request that fails validation adds none of its records,
+  // so a stream never holds half an append.
+  //
+  // Not idempotent. A retried append adds the records twice; the `etag` is
+  // there to make it conditional when that matters.
+  //
+  //   NOT_FOUND            no such stream
+  //   FAILED_PRECONDITION  the stream is closed
+  //   ABORTED              etag was supplied and does not match
+  //   INVALID_ARGUMENT     `records` is empty or over 1000, or a record violates its constraints
+  //   PERMISSION_DENIED    caller may not write to it
+  rpc AppendStreamRecords(AppendStreamRecordsRequest) returns (Stream) {
+    option (google.api.http) = {
+      post: "/v1/{name=streams/*}:append"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name,records";
+  }
+
+  // Updates a stream's own fields.
+  //
+  //   PATCH /v1/{stream.name=streams/*}
+  //   body: the stream itself
+  //
+  // In practice this sets `closed`. A partial update: only fields named in
+  // `update_mask` are written, and an empty mask writes every mutable field,
+  // which will clear anything the caller left unset -- pass a mask unless that
+  // is the intent. OUTPUT_ONLY and IMMUTABLE fields are rejected rather than
+  // silently dropped, `base_version` among them.
+  //
+  // `records` is mutable but replaces wholesale, and appending through it is a
+  // mistake: use AppendStreamRecords, which cannot lose a record that arrived
+  // while the caller was composing the list. Closing a stream is one-way.
+  //
+  // Idempotent. Pass the `etag` read from Get to make the write conditional.
+  //
+  //   NOT_FOUND            no such stream
+  //   FAILED_PRECONDITION  reopening a closed stream
+  //   ABORTED              etag does not match the stored stream
+  //   INVALID_ARGUMENT     mask names an unknown or immutable field
+  //   PERMISSION_DENIED    caller may not modify it
+  rpc UpdateStream(UpdateStreamRequest) returns (Stream) {
+    option (google.api.http) = {
+      patch: "/v1/{stream.name=streams/*}"
+      body: "stream"
+    };
+    option (google.api.method_signature) = "stream,update_mask";
+  }
+
+  // Deletes a stream.
+  //
+  //   DELETE /v1/{name=streams/*}
+  //
+  // Soft delete: the stream is marked deleted, disappears from List unless
+  // `show_deleted` is set, and is purged at `expire_time`. Recover it with
+  // Undelete before then. Deleting is not closing -- a deleted stream is gone
+  // from the collection, where a closed one is still readable and still
+  // answers Get.
+  //
+  // Idempotent in effect but not in reporting: a second delete returns
+  // NOT_FOUND rather than succeeding silently.
+  //
+  //   NOT_FOUND          no such stream
+  //   ABORTED            etag does not match
+  //   PERMISSION_DENIED  caller may not delete it
+  rpc DeleteStream(DeleteStreamRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/{name=streams/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Restores a soft-deleted stream.
+  //
+  //   POST /v1/{name=streams/*}:undelete
+  //
+  // Valid only before `expire_time`; after that the stream is gone and this
+  // returns NOT_FOUND. Clears `delete_time` and `expire_time` and returns the
+  // stream as it was, `closed` included -- restoring a finished stream does
+  // not reopen it.
+  //
+  //   NOT_FOUND          no such stream, or already purged
+  //   ALREADY_EXISTS     the stream is not deleted
+  //   PERMISSION_DENIED  caller may not restore it
+  rpc UndeleteStream(UndeleteStreamRequest) returns (Stream) {
+    option (google.api.http) = {
+      post: "/v1/{name=streams/*}:undelete"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Normalises a stream into resolved records, RFC 8428 section 4.6 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.6>.
+  //
+  //   POST /v1/{name=streams/*}:resolve
+  //   body: the whole request message
+  //
+  // The counterpart of `Packs.ResolvePack`, and the reason it takes no
+  // reference time: each record already carries its own, in
+  // `StreamRecord.reference_time_value`, per section 4.8 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8>. Supplying one
+  // instant for the whole stream is exactly the error this resource exists to
+  // prevent.
+  //
+  // Concatenates each name onto the base name in force, adds base times to
+  // times, applies base units and base values, converts each relative time
+  // against that record's own instant, and returns the records in
+  // chronological order. Nothing is written.
+  //
+  // Safe. Idempotent for a closed stream; a live one gains records between
+  // calls, so a later call returns a superset.
+  //
+  //   NOT_FOUND          no such stream
+  //   INVALID_ARGUMENT   a record's base and regular time sum past 2**28 and flips a relative time absolute
+  //   PERMISSION_DENIED  caller may not read it
+  rpc ResolveStream(ResolveStreamRequest) returns (ResolveStreamResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=streams/*}:resolve"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+}

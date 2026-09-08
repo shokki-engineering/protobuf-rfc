@@ -17,6 +17,7 @@ older one is the secondary run, and it is not going away.
 | Identity | [RFC 7643](https://www.rfc-editor.org/rfc/rfc7643.html) SCIM, +9865, +9967 | [RFC 4519](https://www.rfc-editor.org/rfc/rfc4519.html) LDAP | none specified | build |
 | Calendar | [RFC 8984](https://www.rfc-editor.org/rfc/rfc8984.html) JSCalendar | [RFC 5545](https://www.rfc-editor.org/rfc/rfc5545.html) iCalendar | draft only | **deferred** |
 | Scheduling | none published | [RFC 5546](https://www.rfc-editor.org/rfc/rfc5546.html) iTIP | — | legacy only |
+| Measurement | [RFC 8428](https://www.rfc-editor.org/rfc/rfc8428.html) SenML, +9100, +8798 | none defined | — | build |
 
 ```mermaid
 flowchart TD
@@ -48,6 +49,27 @@ shipped.
 
 Deferring is the default when a lineage is in flux. Check the datatracker
 before assuming a "modern" RFC is settled.
+
+### A lineage of one
+
+Measurement has no legacy row, and that is a finding rather than an omission.
+SenML was specified once, in 2018, with four encodings defined **inside**
+RFC 8428 itself — JSON, CBOR, XML and EXI, sections 5 to 8, one data model
+between them. There is no older text format it grew out of and no successor
+obsoleting it; RFC 9100 and RFC 8798 amend it in place, which is the same
+relationship 9982 has to 9553.
+
+So the canonical/legacy split has nothing to divide, and the flowchart's
+conversion branch never fires: there is no cross-lineage codec to specify,
+only serialisations of one model. What the rule still decides is that those
+are **codecs**, registered in `shared/interchange/v1`, not schemas.
+
+Eight of them, not four, and the split is not cosmetic. The `senml*` types
+carry a Pack and the `sensml*` types carry a SenSML Stream (§4.8), which
+resolves a relative time against when each *record* was sent rather than when
+the document was. They are registered against `protobufrfc.dev/Pack` and
+`protobufrfc.dev/Stream` respectively, so asking for `application/sensml+json`
+and being served a pack is a type error rather than a formatting one.
 
 ### Legacy is not deprecated
 
@@ -107,12 +129,16 @@ flowchart LR
         VC["vCard · xCard · jCard"]
         IC["iCalendar · jCal"]
         LD["LDIF"]
+        SEN["senml+json · senml+cbor<br/>senml+xml · senml-exi"]
+        SSEN["sensml+json · sensml+cbor<br/>sensml+xml · sensml-exi"]
     end
 
     subgraph back["back — what is stored"]
         JSC["JSContact<br/>RFC 9553 + 9982"]
         JSCAL["JSCalendar<br/>RFC 8984 — deferred"]
         SCIM["SCIM<br/>RFC 7643"]
+        PACK["SenML Pack<br/>RFC 8428 + 9100"]
+        SSTR["SenSML Stream<br/>RFC 8428 §4.8"]
     end
 
     VC -- "decode · RFC 9555" --> JSC
@@ -121,6 +147,10 @@ flowchart LR
     JSCAL -. "encode" .-> IC
     LD -- "decode · no spec" --> SCIM
     SCIM -. "encode" .-> LD
+    SEN -- "decode · RFC 8428 §5-8" --> PACK
+    PACK -. "encode" .-> SEN
+    SSEN -- "decode · RFC 8428 §4.8" --> SSTR
+    SSTR -. "encode" .-> SSEN
 
     classDef built fill:#1a7f37,stroke:#1a7f37,color:#fff
     classDef pending fill:#9a6700,stroke:#9a6700,color:#fff
@@ -128,6 +158,8 @@ flowchart LR
     class JSC built
     class JSCAL pending
     class SCIM invented
+    class PACK built
+    class SSTR built
 ```
 
 Solid arrows are decode, dotted are encode. The colours are the three states

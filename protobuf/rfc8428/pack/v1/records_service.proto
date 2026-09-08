@@ -1,0 +1,122 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.pack.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "protobuf/rfc8428/pack/v1/pack.proto";
+import "protobuf/rfc8428/pack/v1/records_messages.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "RecordsServiceProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.pack.v1";
+
+// PackRecords reads and writes parts of a pack, RFC 8790 <https://www.rfc-editor.org/rfc/rfc8790.html>.
+//
+// RFC 8790 <https://www.rfc-editor.org/rfc/rfc8790.html> defines FETCH, PATCH and iPATCH over SenML for CoAP, where the
+// point is not spending a constrained radio link on a whole pack to read one
+// reading out of it. The same argument holds over HTTP once a pack has
+// thousands of records, so the operations are here rather than left at the
+// CoAP edge.
+//
+// **A second service on the same resource, not a second resource.** Rule 2
+// forces it: one `service` block cannot span files, and `Packs` plus these two
+// methods will not fit in 250 lines. The seam is real -- `Packs` treats a pack
+// as one document, this addresses the records inside one -- but nothing here
+// owns anything. Both services operate on "protobufrfc.dev/Pack" and a caller
+// may use either at any time.
+//
+// **Why not `UpdatePack` with a field mask.** A mask names *fields*, and every
+// record lives in one repeated field, so the finest a mask can go is "replace
+// all records". RFC 8790 <https://www.rfc-editor.org/rfc/rfc8790.html> selects by content instead -- by name, and optionally
+// time and unit -- which is a different addressing scheme, not a finer one.
+// The two coexist: use `UpdatePack` to replace a pack, this to edit inside it.
+//
+// **Neither method is called what the RFC calls it.** AIP-131 <https://aip.dev/131> reserves
+// `Fetch` as a synonym for `Get` and AIP-134 <https://aip.dev/134> reserves `Patch` as a synonym
+// for `Update`, and api-linter rejects both as method-name prefixes -- a
+// method called `PatchPack` reads to a generated client as the standard update
+// it is not. The verbs used instead are RFC 8790 <https://www.rfc-editor.org/rfc/rfc8790.html>'s own: section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1> says
+// FETCH is used "to select and return a subset of Records", and section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>
+// speaks throughout of patch records being *applied*. The CoAP methods are
+// named in each RPC's comment, and the table in `docs/conventions.md` records
+// the rename.
+//
+// Reference: RFC 8790 "FETCH and PATCH with Sensor Measurement Lists (SenML)".
+// https://www.rfc-editor.org/rfc/rfc8790.html
+service PackRecords {
+  // Returns the records of a pack that match a set of selectors: the CoAP
+  // FETCH method of RFC 8790 section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1>.
+  //
+  //   POST /v1/{name=packs/*}:select
+  //   body: the whole request message
+  //
+  // A custom method (AIP-136), and a POST despite being a read: the selectors
+  // are a list of structured records, which does not fit in a query string.
+  // That is the same shape CoAP FETCH has and the reason RFC 8132 defines
+  // FETCH as a method with a body at all.
+  //
+  // Matching is on the **resolved** form of both sides, section 3.1 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.1>: base
+  // names are concatenated and base times added before comparison, so a
+  // selector written with base fields finds a target written without them. A
+  // selector with only a name matches every record with that name regardless
+  // of time; adding a time, a unit, or both narrows it, and all given fields
+  // must be equal. Each target record comes back at most once.
+  //
+  // Safe and idempotent. An unmatched fetch returns an empty list, not
+  // NOT_FOUND -- that code is reserved for the pack itself being absent.
+  //
+  //   NOT_FOUND          no such pack
+  //   INVALID_ARGUMENT   a fetch record has no name and no base name, or the list is empty or over 1000
+  //   PERMISSION_DENIED  caller may not read it
+  rpc SelectPackRecords(SelectPackRecordsRequest) returns (SelectPackRecordsResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=packs/*}:select"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name,records";
+  }
+
+  // Adds, replaces and removes individual records of a pack: the CoAP PATCH
+  // and iPATCH methods of RFC 8790 section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>.
+  //
+  //   POST /v1/{name=packs/*}:applyPatch
+  //   body: the whole request message
+  //
+  // Each patch record selects by name, and optionally time and unit, exactly
+  // as a fetch record does. A match is replaced with the patch record's
+  // contents; a selector matching nothing adds the record to the pack; and a
+  // patch record with `remove` set deletes the match. Records are applied in
+  // the order given.
+  //
+  // **One target each.** A patch record matching more than one record is
+  // invalid, section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2> -- applying one patch to several targets would
+  // leave the pack holding duplicates. Narrow the selector with a time or a
+  // unit when a name alone is ambiguous.
+  //
+  // **All or nothing.** Section 3.2 <https://www.rfc-editor.org/rfc/rfc8790.html#section-3.2>: "If a Patch Pack is rejected, the
+  // state of the Target Pack is not changed." A pack never holds half a patch,
+  // so a rejected call needs no cleanup.
+  //
+  // Idempotent, which is why RFC 8790 <https://www.rfc-editor.org/rfc/rfc8790.html> makes PATCH and iPATCH equivalent for
+  // SenML and why only one method appears here: applying the same patch twice
+  // leaves the pack as it was after the first. Note the exception RFC 8790 <https://www.rfc-editor.org/rfc/rfc8790.html>
+  // section 5 <https://www.rfc-editor.org/rfc/rfc8790.html#section-5> carves out -- an unknown extension label is written through
+  // rather than rejected here, where in a pack a label ending "_" would be
+  // fatal.
+  //
+  //   NOT_FOUND          no such pack
+  //   ABORTED            etag was supplied and does not match
+  //   INVALID_ARGUMENT   a patch record matches several records, has no name, or carries neither a value nor a removal
+  //   PERMISSION_DENIED  caller may not modify it
+  rpc ApplyPackPatch(ApplyPackPatchRequest) returns (Pack) {
+    option (google.api.http) = {
+      post: "/v1/{name=packs/*}:applyPatch"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name,records";
+  }
+}

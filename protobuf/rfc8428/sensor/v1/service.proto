@@ -1,0 +1,157 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.sensor.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/protobuf/empty.proto";
+import "protobuf/rfc8428/sensor/v1/messages.proto";
+import "protobuf/rfc8428/sensor/v1/sensor.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "ServiceProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.sensor.v1";
+
+// Sensors is the registry of what SenML names refer to.
+//
+// The out-of-band half RFC 8428 section 4.7 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.7> points at, and native: no RFC
+// specifies this service. `Sensor`'s own comment carries the argument for it
+// existing at all, and for it sitting under `rfc8428/` despite that.
+//
+// Nothing here validates packs against the registry, and that is deliberate.
+// A pack naming an unregistered sensor is ordinary -- devices appear before
+// anyone catalogues them -- so `Packs.CreatePack` never consults this service
+// and a sensor may be registered long after its first reading was stored. The
+// join is a string lookup on `senml_id`, in whichever direction a caller
+// needs it.
+service Sensors {
+  // Retrieves one sensor.
+  //
+  //   GET /v1/{name=sensors/*}
+  //
+  // Safe and idempotent. Read the `etag` here and pass it back on update or
+  // delete to make the write conditional.
+  //
+  //   NOT_FOUND          no such sensor, or it is soft-deleted and `show_deleted` was not set
+  //   INVALID_ARGUMENT   name does not match sensors/*
+  //   PERMISSION_DENIED  caller may not read it
+  rpc GetSensor(GetSensorRequest) returns (Sensor) {
+    option (google.api.http) = {get: "/v1/{name=sensors/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists sensors.
+  //
+  //   GET /v1/sensors
+  //
+  // Paginated per AIP-158: pass `page_size` (defaults to 50, capped at 1000)
+  // and the `next_page_token` from the previous response. An empty
+  // `next_page_token` means the last page. Page tokens are opaque and may
+  // expire; do not construct or store them.
+  //
+  // Filtering uses the AIP-160 expression language over the sensor's own
+  // fields. `senml_id` is the one to filter on when resolving a name read out
+  // of a pack, and `resource_types:"oic.r.temperature"` narrows by what the
+  // thing is. Results carry no guaranteed order.
+  //
+  //   INVALID_ARGUMENT   malformed filter, or page_size out of range
+  //   PERMISSION_DENIED  caller may not list this collection
+  rpc ListSensors(ListSensorsRequest) returns (ListSensorsResponse) {
+    option (google.api.http) = {get: "/v1/sensors"};
+  }
+
+  // Registers a sensor.
+  //
+  //   POST /v1/sensors
+  //   body: the sensor itself
+  //
+  // Server-assigned fields on the request body are ignored: `name`, `uid`,
+  // `etag` and the timestamps are set by the server regardless of what is
+  // sent. `senml_id` is not among them -- it is the caller's to supply and is
+  // immutable thereafter. Supply `sensor_id` to choose the final path segment;
+  // leave it empty and the server generates one.
+  //
+  // Not idempotent. Retrying after a timeout may register a second sensor for
+  // the same `senml_id`; supply `sensor_id` if the caller needs retry safety.
+  //
+  //   ALREADY_EXISTS     that sensor_id is taken
+  //   INVALID_ARGUMENT   `senml_id` is empty or violates RFC 8428 section 4.5.1's character set
+  //   PERMISSION_DENIED  caller may not create here
+  rpc CreateSensor(CreateSensorRequest) returns (Sensor) {
+    option (google.api.http) = {
+      post: "/v1/sensors"
+      body: "sensor"
+    };
+    option (google.api.method_signature) = "sensor,sensor_id";
+  }
+
+  // Updates a sensor.
+  //
+  //   PATCH /v1/{sensor.name=sensors/*}
+  //   body: the sensor itself
+  //
+  // A partial update: only fields named in `update_mask` are written. An empty
+  // mask writes every mutable field, which will clear anything the caller left
+  // unset -- pass a mask unless that is the intent. OUTPUT_ONLY and IMMUTABLE
+  // fields are rejected rather than silently dropped, and `senml_id` is
+  // IMMUTABLE: re-pointing it would silently re-attribute every reading
+  // already stored against it.
+  //
+  // Idempotent. Pass the `etag` read from Get to make the write conditional.
+  //
+  //   NOT_FOUND          no such sensor
+  //   ABORTED            etag does not match the stored sensor
+  //   INVALID_ARGUMENT   mask names an unknown or immutable field, `senml_id` among them
+  //   PERMISSION_DENIED  caller may not modify it
+  rpc UpdateSensor(UpdateSensorRequest) returns (Sensor) {
+    option (google.api.http) = {
+      patch: "/v1/{sensor.name=sensors/*}"
+      body: "sensor"
+    };
+    option (google.api.method_signature) = "sensor,update_mask";
+  }
+
+  // Deletes a sensor.
+  //
+  //   DELETE /v1/{name=sensors/*}
+  //
+  // Soft delete: the sensor is marked deleted, disappears from List unless
+  // `show_deleted` is set, and is purged at `expire_time`. Recover it with
+  // Undelete before then. Packs naming it are untouched -- deregistering a
+  // thermometer does not delete its readings, and a pack that outlives its
+  // sensor is the ordinary case rather than an inconsistency.
+  //
+  // Idempotent in effect but not in reporting: a second delete returns
+  // NOT_FOUND rather than succeeding silently.
+  //
+  //   NOT_FOUND          no such sensor
+  //   ABORTED            etag does not match
+  //   PERMISSION_DENIED  caller may not delete it
+  rpc DeleteSensor(DeleteSensorRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/v1/{name=sensors/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Restores a soft-deleted sensor.
+  //
+  //   POST /v1/{name=sensors/*}:undelete
+  //
+  // Valid only before `expire_time`; after that the sensor is gone and this
+  // returns NOT_FOUND. Clears `delete_time` and `expire_time` and returns the
+  // sensor as it was, `senml_id` included, so readings stored while it was
+  // deleted resolve again.
+  //
+  //   NOT_FOUND          no such sensor, or already purged
+  //   ALREADY_EXISTS     the sensor is not deleted
+  //   PERMISSION_DENIED  caller may not restore it
+  rpc UndeleteSensor(UndeleteSensorRequest) returns (Sensor) {
+    option (google.api.http) = {
+      post: "/v1/{name=sensors/*}:undelete"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+}

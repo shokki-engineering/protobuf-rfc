@@ -81,6 +81,11 @@ cp sandbox/go/go.mod gen/go/ && (cd gen/go && go mod tidy && go build ./...)
 | `protobuf.rfc4519.membership.v1` | `Membership` | 4519 §2.17 |
 | `protobuf.rfc5545.calendar.v1` | `Calendar` | 5545 §3.4 |
 | `protobuf.rfc5545.event.v1` | `Event`, `Recurrence` | 5545 §3.6.1 |
+| `protobuf.rfc9073.resource.v1` | `Resource` | 9073 §7.3 |
+| `protobuf.rfc8428.pack.v1` | `Pack`, `Record` | 8428 — SenML, +8790 |
+| `protobuf.rfc8428.stream.v1` | `Stream` | 8428 §4.8 — SenSML |
+| `protobuf.rfc8428.unit.v1` | `Unit` | 8428 §12.1, +8798 |
+| `protobuf.rfc8428.sensor.v1` | `Sensor` | native — see rule 5 |
 | `protobuf.shared.interchange.v1` | — (service only) | native |
 
 One package per resource, each self-contained: its resource, value objects,

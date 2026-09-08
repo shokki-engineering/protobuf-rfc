@@ -117,6 +117,21 @@ A type with no RFC behind it lives in `shared/v1` and says in its comment why
 it exists anyway. A native type must never sit in an `rfc*/` directory, where
 the path alone would lend it authority it has not earned.
 
+**One exception, and it is written here so it stays one.** A native type may
+sit under `rfc*/` when it is meaningless apart from that RFC -- when filing it
+in `shared/` would misdescribe it as general-purpose. `rfc8428/sensor/v1` is
+the case: RFC 8428 section 4.7 says SenML deliberately carries no static
+metadata about a sensor and that such metadata is held out of band, so `Sensor`
+fills a gap that RFC names and declines to fill. Nothing on the message comes
+from RFC 8428, and in `shared/` it would read as a general sensor registry,
+which it is not.
+
+The test is *meaningless apart from*, not *related to*. `Project` is related to
+`Group` and stays in `shared/`. When the exception is taken, the message
+comment must say so and say what the path is claiming -- that comment is the
+substitute for the directory's honesty, and without it this is just the rule
+being broken.
+
 ## 6. Layout
 
 ```

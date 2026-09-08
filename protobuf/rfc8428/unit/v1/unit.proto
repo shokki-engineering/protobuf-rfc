@@ -1,0 +1,161 @@
+// Copyright 2026 The Protobuf Project authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package protobuf.rfc8428.unit.v1;
+
+import "buf/validate/validate.proto";
+import "google/api/field_behavior.proto";
+import "google/api/field_info.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+import "google/type/fraction.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "UnitProto";
+option java_package = "io.github.theprotobufproject.protobuf.rfc8428.unit.v1";
+
+// Unit is one entry in the SenML Units registry, RFC 8428 section 12.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1>, or
+// in the Secondary Units subregistry RFC 8798 section 3 <https://www.rfc-editor.org/rfc/rfc8798.html#section-3> adds to it.
+//
+// One resource for both, because RFC 8798 <https://www.rfc-editor.org/rfc/rfc8798.html> says they are one registry: its
+// section 3 <https://www.rfc-editor.org/rfc/rfc8798.html#section-3> opens "IANA has created a 'Secondary Units' subregistry in the
+// 'Sensor Measurement Lists (SenML)' registry defined in RFC 8428". That
+// sentence is also why this package sits under `rfc8428/` and not `rfc8798/`:
+// rule 6 gives a directory to the **defining** RFC, and 8798 refines a
+// registry 8428 created.
+//
+// A primary entry and a secondary one differ by `senml_unit`. A primary unit
+// stands alone -- "Cel" is degrees Celsius and converts to nothing. A
+// secondary unit names the primary it derives from and carries the two
+// numbers that get you there.
+//
+// **Why this is a resource and not a constant table.** RFC 8798 section 4 <https://www.rfc-editor.org/rfc/rfc8798.html#section-4>
+// asks for it in as many words: the subregistry "is expected to grow at a
+// faster pace" than the primary one, it "is amenable to automatic
+// interpretation, by making use of the scale and offset columns", and
+// implementations SHOULD **not** each poll IANA -- they should receive updated
+// registries "via common repositories". A deployment holding its own copy,
+// addressable and updatable, is that common repository. An enum would be the
+// opposite: frozen at the moment this schema shipped, rejecting every unit
+// registered since.
+//
+// Reference: RFC 8428 "Sensor Measurement Lists (SenML)", section 12.1.
+// https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1
+message Unit {
+  option (google.api.resource) = {
+    type: "protobufrfc.dev/Unit"
+    pattern: "units/{unit}"
+    singular: "unit"
+    plural: "units"
+  };
+  option (buf.validate.message).cel = {
+    id: "unit.secondary_needs_scale"
+    message:
+      "a secondary unit needs a scale, and only a secondary unit may carry "
+      "scale or offset (RFC 8798 section 3)"
+    expression: "this.senml_unit == '' ? (!has(this.scale) && !has(this.offset)) : has(this.scale)"
+  };
+
+  // Resource name, "units/{unit}".
+  string name = 1 [
+    (google.api.field_behavior) = IDENTIFIER,
+    (buf.validate.field).string.pattern = "^units/[^/]+$",
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+
+  // Server-assigned unique id.
+  string uid = 2 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_info).format = UUID4,
+    (buf.validate.field).string.uuid = true,
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+  ];
+
+  // The registered symbol, e.g. "Cel", "%RH", "ms", "kWh". This is what a
+  // record's `unit` field holds.
+  //
+  // IMMUTABLE, and the reason is RFC 8428 section 12.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1>'s: the registry
+  // exists "to make sure that symbols uniquely map to indicate a type of
+  // measurement". Re-pointing a symbol at a different quantity would
+  // retroactively change what every stored reading in that unit means.
+  //
+  // Case-sensitive, per section 12.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1>'s rule 9, which also asks that
+  // symbols differing only in case never both be allocated.
+  string symbol = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.field_behavior) = IMMUTABLE,
+    (buf.validate.field).string.min_len = 1
+  ];
+
+  // What the unit is, usually just the expansion of the abbreviation --
+  // "millisecond" for "ms", "kilowatt-hour" for "kWh". Both registries carry
+  // this column.
+  string description = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // For a secondary unit, the primary SenML unit it converts into, RFC 8798 <https://www.rfc-editor.org/rfc/rfc8798.html>
+  // section 3 <https://www.rfc-editor.org/rfc/rfc8798.html#section-3>: "s" for "ms", "J" for "kWh", "dBW" for "dBm".
+  //
+  // Empty means this is a primary entry from RFC 8428 section 12.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1>. That
+  // is the only thing distinguishing the two registries here, and it is
+  // enough: section 3 <https://www.rfc-editor.org/rfc/rfc8798.html#section-3> requires a secondary unit to name an existing primary
+  // one, so the field is present exactly when the entry is secondary.
+  //
+  // A symbol, not a resource reference. It names another Unit by its `symbol`,
+  // which is the spelling records use and registries publish; a resource name
+  // would be this deployment's own and would not survive being exported.
+  string senml_unit = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Multiply by this first, RFC 8798 section 3 <https://www.rfc-editor.org/rfc/rfc8798.html#section-3>. 1/1000 for "ms", 3600000
+  // for "kWh", 1/3.6 for "km/h".
+  //
+  // A google.type.Fraction, because section 3 <https://www.rfc-editor.org/rfc/rfc8798.html#section-3> defines scale and offset as
+  // **rational numbers** and writes half the registry as fractions. A double
+  // cannot hold 1/1000 or 1/3600000 exactly, and a unit conversion that is
+  // wrong in the last bits is worse than one that is obviously wrong. The
+  // registry's decimal spellings are rationals too -- 3.6 is 18/5, 1e-9 is
+  // 1/1000000000 -- so nothing in the table is lost by this shape.
+  //
+  // This reverses `adding-data.md`'s earlier rejection of Fraction, which said
+  // no field in these RFCs was a number of that kind. RFC 8798 <https://www.rfc-editor.org/rfc/rfc8798.html> has two.
+  google.type.Fraction scale = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Add this second, RFC 8798 section 3 <https://www.rfc-editor.org/rfc/rfc8798.html#section-3>. Zero for almost every entry;
+  // -30 for "dBm", which is the registry's one worked example of why the
+  // column exists.
+  //
+  // Order matters and is section 3 <https://www.rfc-editor.org/rfc/rfc8798.html#section-3>'s: multiply by `scale`, **then** add
+  // `offset`. 10 dBm is 10 x 1 = 10, then 10 + -30 = -20 dBW.
+  google.type.Fraction offset = 7 [(google.api.field_behavior) = OPTIONAL];
+
+  // Where the entry comes from, e.g. "RFC 8798". Both registries carry this
+  // column; section 12.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.2> asks that it say where to find out more.
+  string reference = 8 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether new implementations should stop producing this unit, RFC 8428 <https://www.rfc-editor.org/rfc/rfc8428.html>
+  // section 12.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1>. The asterisked entries: "g", "%", and the rest.
+  //
+  // Producers and consumers are told different things, which is why one flag
+  // cannot be read as "supported". Section 12.1 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1> marks these NOT
+  // RECOMMENDED **to produce**, while consumers "SHOULD be implemented" for
+  // them because the units are in active use. So this suppresses a unit when
+  // choosing one to emit, and never when deciding what to accept.
+  bool producing_discouraged = 9 [(google.api.field_behavior) = OPTIONAL];
+
+  // When the entry was added to this deployment's copy of the registry.
+  google.protobuf.Timestamp create_time = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the entry was last modified.
+  google.protobuf.Timestamp update_time = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Weak validator for optimistic concurrency, AIP-154 <https://aip.dev/154>. Pass it back in an
+  // update or delete to make the write conditional.
+  string etag = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the entry was soft-deleted, unset while it is live. AIP-164 <https://aip.dev/164>.
+  google.protobuf.Timestamp delete_time = 13 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When a soft-deleted entry is purged for good. AIP-164 <https://aip.dev/164>.
+  google.protobuf.Timestamp expire_time = 14 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

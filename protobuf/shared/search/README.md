@@ -24,7 +24,7 @@ Request message for Search.SearchResources.
 | Field | Type | Behavior | Description |
 | --- | --- | --- | --- |
 | `query` | `string` | `REQUIRED` | What to look for, as free text.  Free text and not an AIP-160 <https://aip.dev/160> filter, which is the whole reason this service exists. A filter names a field and a comparison, so it cannot be written without knowing which resource type is being searched; a query spanning Cards, Events and LdapGroups has no common field vocabulary to filter on. Narrowing by field belongs on each resource's own List method, which already takes a filter. |
-| `resource_types` | `repeated string` | `OPTIONAL` | Resource types to search, e.g. "protobufrfc.dev/Card". Empty searches every type the server indexes.  The string each resource declares in `google.api.resource`, which is what rule 7 keys a generic service on. |
+| `resource_types` | `repeated string` | `OPTIONAL` | Resource types to search, e.g. "the-protobuf-project.org/Card". Empty searches every type the server indexes.  The string each resource declares in `google.api.resource`, which is what rule 7 keys a generic service on. |
 | `parent` | `string` | `OPTIONAL` | Collection to search within, e.g. "calendars/c1". Empty searches everywhere the caller may read. |
 | `page_size` | `int32` | `OPTIONAL` | Maximum results to return. Defaults to 50, capped at 1000. |
 | `page_token` | `string` | `OPTIONAL` | Page token from a previous SearchResourcesResponse.next_page_token.  Pagination here, unlike protobuf.shared.sync.v1, is AIP-158 <https://aip.dev/158>'s: a position in one result set. A search is a snapshot of an index, so there is nothing to resume against and no removals to report. |
@@ -47,7 +47,7 @@ SearchResult is one match.  It carries a resource **name**, not the resource: ru
 | Field | Type | Behavior | Description |
 | --- | --- | --- | --- |
 | `resource` | `string` | `REQUIRED` | Resource name, e.g. "cards/2f1a".  Named `resource` and not `name`: a field called `name` makes api-linter read the enclosing message as a resource and demand a `google.api.resource` annotation, which a search hit is not. Rule 10. |
-| `resource_type` | `string` | `REQUIRED` | The matched resource's type, e.g. "protobufrfc.dev/Card". Present so a caller can route the re-fetch without parsing the name. |
+| `resource_type` | `string` | `REQUIRED` | The matched resource's type, e.g. "the-protobuf-project.org/Card". Present so a caller can route the re-fetch without parsing the name. |
 | `score` | `double` | `OPTIONAL` | Relevance, higher is better.  Comparable only within one response. Scores from different queries, or from the same query against a re-indexed corpus, mean nothing next to each other, and nothing here defines a scale. |
 | `snippet` | `string` | `OPTIONAL` | A fragment of the matching text, for display. May be empty, and carries no markup: highlighting is the caller's to apply. |
 

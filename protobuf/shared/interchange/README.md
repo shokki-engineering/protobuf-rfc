@@ -9,11 +9,11 @@
 
 ### Interchange
 
-Interchange moves resources across the wire boundary in their native standardised formats.  Native: no RFC specifies this service. It exists because the alternative is an Export and an Import method on every resource service, each identical apart from the type it names, and each a place for the two directions to drift apart.  **What makes it generic**  `resource_type` is the string a resource already declares in its `google.api.resource` annotation -- "protobufrfc.dev/Vcard". A resource becomes exportable by declaring that and having a codec registered, not by growing methods of its own, so AIP-131..135 services stay at the standard methods.  Codecs register against a `(resource_type, media_type)` pair. "text/vcard" means something for protobufrfc.dev/Vcard and nothing for protobufrfc.dev/LdapGroup, so an unsupported pair is the common client error, not an edge case.  **Long-running operations**  Both methods return `google.longrunning.Operation` (AIP-151). Neither direction bounds how much data it moves, and a unary call that works in development and times out in production is not a contract worth publishing.  The operation is polled through the standard `google.longrunning.Operations` service, which a host must also expose:    GET  /v1/{name=operations/**}          Operations.GetOperation   POST /v1/{name=operations/**}:cancel   Operations.CancelOperation  While running, `Operation.metadata` holds progress; on success `Operation.response` holds the response message below. `Operation.done` false with no error means still working -- poll with backoff, do not re-issue the request, which would start a second export.  **Errors**  Both methods return these, in addition to the standard transport codes:    INVALID_ARGUMENT   malformed resource_type or media_type   NOT_FOUND          resource_type names no declared resource   UNIMPLEMENTED      no codec for this (resource_type, media_type) pair   PERMISSION_DENIED  caller may not read (export) or write (import) the                      resources named  Errors surface on the operation, not the initial call, once the operation has been created -- an unsupported pair is detected before creation and fails the RPC directly.
+Interchange moves resources across the wire boundary in their native standardised formats.  Native: no RFC specifies this service. It exists because the alternative is an Export and an Import method on every resource service, each identical apart from the type it names, and each a place for the two directions to drift apart.  **What makes it generic**  `resource_type` is the string a resource already declares in its `google.api.resource` annotation -- "the-protobuf-project.org/Vcard". A resource becomes exportable by declaring that and having a codec registered, not by growing methods of its own, so AIP-131..135 services stay at the standard methods.  Codecs register against a `(resource_type, media_type)` pair. "text/vcard" means something for the-protobuf-project.org/Vcard and nothing for the-protobuf-project.org/LdapGroup, so an unsupported pair is the common client error, not an edge case.  **Long-running operations**  Both methods return `google.longrunning.Operation` (AIP-151). Neither direction bounds how much data it moves, and a unary call that works in development and times out in production is not a contract worth publishing.  The operation is polled through the standard `google.longrunning.Operations` service, which a host must also expose:    GET  /v1/{name=operations/**}          Operations.GetOperation   POST /v1/{name=operations/**}:cancel   Operations.CancelOperation  While running, `Operation.metadata` holds progress; on success `Operation.response` holds the response message below. `Operation.done` false with no error means still working -- poll with backoff, do not re-issue the request, which would start a second export.  **Errors**  Both methods return these, in addition to the standard transport codes:    INVALID_ARGUMENT   malformed resource_type or media_type   NOT_FOUND          resource_type names no declared resource   UNIMPLEMENTED      no codec for this (resource_type, media_type) pair   PERMISSION_DENIED  caller may not read (export) or write (import) the                      resources named  Errors surface on the operation, not the initial call, once the operation has been created -- an unsupported pair is detected before creation and fails the RPC directly.
 
 | Method | Request | Response | Description |
 | --- | --- | --- | --- |
-| `ListCodecs` | `ListCodecsRequest` | `ListCodecsResponse` | Lists the (resource_type, media_type) pairs this service can move.    GET /v1/codecs  The discovery half of the registry. A client that wants to offer "export as..." needs to know that text/vcard applies to protobufrfc.dev/Vcard and nothing else, and guessing from the resource type is not possible -- the pairing is a deployment fact, not a property of either string.  Safe and paginated like any other List (AIP-158). The result changes only when the service is redeployed with different codecs registered, so it is cacheable for the lifetime of a connection.    INVALID_ARGUMENT   malformed resource_type |
+| `ListCodecs` | `ListCodecsRequest` | `ListCodecsResponse` | Lists the (resource_type, media_type) pairs this service can move.    GET /v1/codecs  The discovery half of the registry. A client that wants to offer "export as..." needs to know that text/vcard applies to the-protobuf-project.org/Vcard and nothing else, and guessing from the resource type is not possible -- the pairing is a deployment fact, not a property of either string.  Safe and paginated like any other List (AIP-158). The result changes only when the service is redeployed with different codecs registered, so it is cacheable for the lifetime of a connection.    INVALID_ARGUMENT   malformed resource_type |
 
 ## Messages
 
@@ -23,7 +23,7 @@ A registered codec: one (resource_type, media_type) pair Interchange can move.
 
 | Field | Type | Behavior | Description |
 | --- | --- | --- | --- |
-| `resource_type` | `string` | - | Resource type the codec handles, e.g. "protobufrfc.dev/Vcard". |
+| `resource_type` | `string` | - | Resource type the codec handles, e.g. "the-protobuf-project.org/Vcard". |
 | `media_type` | `string` | - | RFC 6838 media type it reads or writes, e.g. "text/vcard". |
 | `can_export` | `bool` | - | Whether ExportResources accepts this pair. |
 | `can_import` | `bool` | - | Whether ImportResources accepts this pair.  Separate from can_export because the two directions are not symmetric: a format can be parseable long before anyone writes a serialiser for it, and a single `supported` flag would have to lie about one of them. |
@@ -36,7 +36,7 @@ Request message for Interchange.ListCodecs, AIP-132.
 | --- | --- | --- | --- |
 | `page_size` | `int32` | `OPTIONAL` | Maximum codecs to return. Defaults to 50, capped at 1000. |
 | `page_token` | `string` | `OPTIONAL` | Page token from a previous ListCodecsResponse.next_page_token. |
-| `filter` | `string` | `OPTIONAL` | Filter expression, AIP-160. Narrowing to one resource type goes here rather than in a field of its own -- AIP-132 permits no custom fields on a List request, and `resource_type = "protobufrfc.dev/Vcard"` says the same thing through the standard channel. |
+| `filter` | `string` | `OPTIONAL` | Filter expression, AIP-160. Narrowing to one resource type goes here rather than in a field of its own -- AIP-132 permits no custom fields on a List request, and `resource_type = "the-protobuf-project.org/Vcard"` says the same thing through the standard channel. |
 
 ### ListCodecsResponse
 
@@ -53,11 +53,11 @@ Request message for Interchange.ExportResources.
 
 | Field | Type | Behavior | Description |
 | --- | --- | --- | --- |
-| `resource_type` | `string` | `REQUIRED` | Resource type to export, exactly as declared in that resource's google.api.resource annotation -- e.g. "protobufrfc.dev/Vcard". This is the dynamic part: the set of exportable things is the set of declared resource types, so a new resource becomes exportable by existing, not by gaining an Export method of its own. |
+| `resource_type` | `string` | `REQUIRED` | Resource type to export, exactly as declared in that resource's google.api.resource annotation -- e.g. "the-protobuf-project.org/Vcard". This is the dynamic part: the set of exportable things is the set of declared resource types, so a new resource becomes exportable by existing, not by gaining an Export method of its own. |
 | `parent` | `string` | `OPTIONAL` | Collection to export from, e.g. "users" or "groups/g1/memberships". Empty exports every collection of resource_type. |
 | `names` | `repeated string` | `OPTIONAL` | Specific resource names to export. Empty exports everything under parent that survives filter. |
 | `filter` | `string` | `OPTIONAL` | Filter expression, AIP-160 <https://aip.dev/160>. Applied only when names is empty. |
-| `media_type` | `string` | `REQUIRED` | RFC 6838 media type selecting the codec, e.g. "text/vcard" or "application/vcard+json".  Codecs register against a (resource_type, media_type) pair, so this is where the request can fail as unsupported: "text/vcard" means something for protobufrfc.dev/Vcard and nothing for protobufrfc.dev/LdapGroup. |
+| `media_type` | `string` | `REQUIRED` | RFC 6838 media type selecting the codec, e.g. "text/vcard" or "application/vcard+json".  Codecs register against a (resource_type, media_type) pair, so this is where the request can fail as unsupported: "text/vcard" means something for the-protobuf-project.org/Vcard and nothing for the-protobuf-project.org/LdapGroup. |
 
 ### ExportResourcesResponse
 
@@ -86,7 +86,7 @@ Request message for Interchange.ImportResources.
 
 | Field | Type | Behavior | Description |
 | --- | --- | --- | --- |
-| `resource_type` | `string` | `REQUIRED` | Resource type the payload contains, e.g. "protobufrfc.dev/Vcard". |
+| `resource_type` | `string` | `REQUIRED` | Resource type the payload contains, e.g. "the-protobuf-project.org/Vcard". |
 | `parent` | `string` | `OPTIONAL` | Collection to import into, e.g. "users". |
 | `payload` | `bytes` | `REQUIRED` | The payload to parse. |
 | `media_type` | `string` | `REQUIRED` | RFC 6838 media type of the payload, selecting the codec. |

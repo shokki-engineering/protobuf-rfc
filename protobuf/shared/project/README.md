@@ -93,7 +93,7 @@ Project is a scope of work with a lifecycle.  Native: no RFC defines it, and und
 | `uid` | `string` | `OUTPUT_ONLY` | Server-assigned unique id. |
 | `display_name` | `string` | `REQUIRED` | Human-readable label. Required: a project with no name is unusable in any list, and there is no RFC here to say otherwise. |
 | `description` | `string` | `OPTIONAL` | What the project is for. |
-| `owner` | `string` | `OPTIONAL` | Who owns it.  Typed as any resource rather than a User, matching Membership.member. An owner may be a person or a group, and naming protobufrfc.dev/Vcard here would make a native package depend on RFC 6350 for its meaning without gaining anything. |
+| `owner` | `string` | `OPTIONAL` | Who owns it.  Typed as any resource rather than a User, matching Membership.member. An owner may be a person or a group, and naming the-protobuf-project.org/Vcard here would make a native package depend on RFC 6350 for its meaning without gaining anything. |
 | `start_time` | `Timestamp` | `OPTIONAL` | When work is scheduled to begin. |
 | `end_time` | `Timestamp` | `OPTIONAL` | When work is scheduled to end. |
 | `state` | `ProjectState` | `OUTPUT_ONLY` | Where the project is in its lifecycle.  Named `state`, which AIP-216 permits only because it is OUTPUT_ONLY: the server derives it from the dates and from explicit transitions, and a client cannot set it directly. |

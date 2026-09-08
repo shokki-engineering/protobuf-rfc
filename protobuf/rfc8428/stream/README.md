@@ -9,7 +9,7 @@
 
 ### Streams
 
-Streams manages Sensor Streaming Measurement Lists, RFC 8428 section 4.8 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8>.  The same surface `Packs` offers, plus an append: a stream grows after it is created, and section 4.8 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8> ties each record's "now" to when that record was sent, so the order it grew in is part of the data.  The four sensml media types (section 12.3.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.3.2> onward) are codecs registered against "protobufrfc.dev/Stream" in `shared/interchange/v1`, kept separate from the four senml types registered against "protobufrfc.dev/Pack". A consumer asking for "application/sensml+json" is asking for stream semantics, and serving it a pack would answer a different question.
+Streams manages Sensor Streaming Measurement Lists, RFC 8428 section 4.8 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8>.  The same surface `Packs` offers, plus an append: a stream grows after it is created, and section 4.8 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8> ties each record's "now" to when that record was sent, so the order it grew in is part of the data.  The four sensml media types (section 12.3.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.3.2> onward) are codecs registered against "the-protobuf-project.org/Stream" in `shared/interchange/v1`, kept separate from the four senml types registered against "the-protobuf-project.org/Pack". A consumer asking for "application/sensml+json" is asking for stream semantics, and serving it a pack would answer a different question.
 
 | Method | Request | Response | Description |
 | --- | --- | --- | --- |

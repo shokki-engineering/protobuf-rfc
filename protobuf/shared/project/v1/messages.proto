@@ -20,7 +20,7 @@ message GetProjectRequest {
   // Name of the project to retrieve, "projects/{project}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Project",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Project",
     (buf.validate.field).string.pattern = "^projects/[^/]+$"
   ];
 }
@@ -85,7 +85,7 @@ message DeleteProjectRequest {
   // Name of the project to delete, "projects/{project}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Project",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Project",
     (buf.validate.field).string.pattern = "^projects/[^/]+$"
   ];
 }
@@ -95,7 +95,7 @@ message UndeleteProjectRequest {
   // Name of the soft-deleted project to restore.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Project",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Project",
     (buf.validate.field).string.pattern = "^projects/[^/]+$"
   ];
 }

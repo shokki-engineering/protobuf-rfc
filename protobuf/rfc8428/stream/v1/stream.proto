@@ -39,7 +39,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc8428.stream.v1";
 // https://www.rfc-editor.org/rfc/rfc8428.html#section-4.8
 message Stream {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Stream"
+    type: "the-protobuf-project.org/Stream"
     pattern: "streams/{stream}"
     singular: "stream"
     plural: "streams"

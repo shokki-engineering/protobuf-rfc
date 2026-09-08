@@ -27,7 +27,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc8428.pack.v1";
 //
 // The four wire encodings -- senml+json, senml+cbor, senml+xml and senml-exi,
 // section 12.3 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.3> -- are not methods here. They are codecs registered
-// against "protobufrfc.dev/Pack" and moved by
+// against "the-protobuf-project.org/Pack" and moved by
 // `protobuf.shared.interchange.v1.Interchange`, so a new encoding is a codec
 // registration rather than a change to this service.
 //

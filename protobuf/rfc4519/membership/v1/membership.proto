@@ -30,7 +30,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc4519.membership.
 // https://www.rfc-editor.org/rfc/rfc4519.html#section-2.17
 message Membership {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Membership"
+    type: "the-protobuf-project.org/Membership"
     pattern: "ldapGroups/{ldap_group}/memberships/{membership}"
     singular: "membership"
     plural: "memberships"

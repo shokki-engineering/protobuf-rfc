@@ -31,7 +31,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc6350.vcard.v1";
 // https://www.rfc-editor.org/rfc/rfc6350.html
 message Vcard {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Vcard"
+    type: "the-protobuf-project.org/Vcard"
     pattern: "vcards/{vcard}"
     singular: "vcard"
     plural: "vcards"

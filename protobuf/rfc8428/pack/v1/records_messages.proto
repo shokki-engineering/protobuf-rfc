@@ -20,7 +20,7 @@ message SelectPackRecordsRequest {
   // Name of the pack to select from, "packs/{pack}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Pack",
     (buf.validate.field).string.pattern = "^packs/[^/]+$"
   ];
 
@@ -58,7 +58,7 @@ message ApplyPackPatchRequest {
   // Name of the pack to patch, "packs/{pack}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Pack",
     (buf.validate.field).string.pattern = "^packs/[^/]+$"
   ];
 

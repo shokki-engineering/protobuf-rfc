@@ -24,7 +24,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc8428.pack.v1";
 // "application/senml+cbor", "application/senml+xml" and
 // "application/senml-exi" -- which is the whole point of the format: one data
 // model, four wire encodings, chosen by how constrained the device and the
-// link are. The four are codecs registered against "protobufrfc.dev/Pack" in
+// link are. The four are codecs registered against "the-protobuf-project.org/Pack" in
 // `shared/interchange/v1`, not four schemas.
 //
 // A flat collection, "packs/{pack}". Section 4.7 <https://www.rfc-editor.org/rfc/rfc8428.html#section-4.7> is explicit that SenML
@@ -43,7 +43,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc8428.pack.v1";
 // https://www.rfc-editor.org/rfc/rfc8428.html#section-4
 message Pack {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Pack"
+    type: "the-protobuf-project.org/Pack"
     pattern: "packs/{pack}"
     singular: "pack"
     plural: "packs"

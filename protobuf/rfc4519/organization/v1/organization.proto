@@ -25,7 +25,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc4519.organizatio
 // https://www.rfc-editor.org/rfc/rfc4519.html#section-3.8
 message Organization {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Organization"
+    type: "the-protobuf-project.org/Organization"
     pattern: "organizations/{organization}"
     singular: "organization"
     plural: "organizations"

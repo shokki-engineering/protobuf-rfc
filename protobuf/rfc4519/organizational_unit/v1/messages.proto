@@ -20,7 +20,7 @@ message GetOrganizationalUnitRequest {
   // Name of the organizational unit to retrieve, "organizationalUnits/{organizationalUnit}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/OrganizationalUnit",
+    (google.api.resource_reference).type = "the-protobuf-project.org/OrganizationalUnit",
     (buf.validate.field).string.pattern = "^organizationalUnits/[^/]+$"
   ];
 }
@@ -85,7 +85,7 @@ message DeleteOrganizationalUnitRequest {
   // Name of the organizational unit to delete, "organizationalUnits/{organizationalUnit}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/OrganizationalUnit",
+    (google.api.resource_reference).type = "the-protobuf-project.org/OrganizationalUnit",
     (buf.validate.field).string.pattern = "^organizationalUnits/[^/]+$"
   ];
 }
@@ -95,7 +95,7 @@ message UndeleteOrganizationalUnitRequest {
   // Name of the soft-deleted organizational unit to restore.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/OrganizationalUnit",
+    (google.api.resource_reference).type = "the-protobuf-project.org/OrganizationalUnit",
     (buf.validate.field).string.pattern = "^organizationalUnits/[^/]+$"
   ];
 }

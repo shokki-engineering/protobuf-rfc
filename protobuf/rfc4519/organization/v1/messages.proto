@@ -20,7 +20,7 @@ message GetOrganizationRequest {
   // Name of the organization to retrieve, "organizations/{organization}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Organization",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Organization",
     (buf.validate.field).string.pattern = "^organizations/[^/]+$"
   ];
 }
@@ -85,7 +85,7 @@ message DeleteOrganizationRequest {
   // Name of the organization to delete, "organizations/{organization}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Organization",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Organization",
     (buf.validate.field).string.pattern = "^organizations/[^/]+$"
   ];
 }
@@ -95,7 +95,7 @@ message UndeleteOrganizationRequest {
   // Name of the soft-deleted organization to restore.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Organization",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Organization",
     (buf.validate.field).string.pattern = "^organizations/[^/]+$"
   ];
 }

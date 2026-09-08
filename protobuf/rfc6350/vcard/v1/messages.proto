@@ -20,7 +20,7 @@ message GetVcardRequest {
   // Name of the vCard to retrieve, "vcards/{vcard}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "protobufrfc.dev/Vcard"}
+    (google.api.resource_reference) = {type: "the-protobuf-project.org/Vcard"}
   ];
 }
 
@@ -84,7 +84,7 @@ message DeleteVcardRequest {
   // Name of the vCard to delete, "vcards/{vcard}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "protobufrfc.dev/Vcard"}
+    (google.api.resource_reference) = {type: "the-protobuf-project.org/Vcard"}
   ];
 }
 
@@ -93,7 +93,7 @@ message UndeleteVcardRequest {
   // Name of the soft-deleted vCard to restore, "vcards/{vcard}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Vcard",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Vcard",
     (buf.validate.field).string.pattern = "^vcards/[^/]+$"
   ];
 }

@@ -20,7 +20,7 @@ message GetGroupRequest {
   // Name of the group to retrieve, "groups/{group}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "protobufrfc.dev/Group"}
+    (google.api.resource_reference) = {type: "the-protobuf-project.org/Group"}
   ];
 }
 
@@ -90,7 +90,7 @@ message DeleteGroupRequest {
   // Name of the group to delete, "groups/{group}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "protobufrfc.dev/Group"}
+    (google.api.resource_reference) = {type: "the-protobuf-project.org/Group"}
   ];
 }
 
@@ -99,7 +99,7 @@ message UndeleteGroupRequest {
   // Name of the soft-deleted group to restore, "groups/{group}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Group",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Group",
     (buf.validate.field).string.pattern = "^groups/[^/]+$"
   ];
 }

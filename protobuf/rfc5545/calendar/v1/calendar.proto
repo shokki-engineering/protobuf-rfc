@@ -32,7 +32,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc5545.calendar.v1
 // https://www.rfc-editor.org/rfc/rfc5545.html#section-3.4
 message Calendar {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Calendar"
+    type: "the-protobuf-project.org/Calendar"
     pattern: "calendars/{calendar}"
     singular: "calendar"
     plural: "calendars"

@@ -29,7 +29,7 @@ message PublishEventRequest {
   // The event to publish.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Event",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Event",
     (buf.validate.field).string.pattern = "^calendars/[^/]+/events/[^/]+$"
   ];
 
@@ -51,7 +51,7 @@ message RequestEventRequest {
   // The event to invite to.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Event",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Event",
     (buf.validate.field).string.pattern = "^calendars/[^/]+/events/[^/]+$"
   ];
 
@@ -80,7 +80,7 @@ message AddEventRequest {
   // The recurring event to add instances to.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Event",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Event",
     (buf.validate.field).string.pattern = "^calendars/[^/]+/events/[^/]+$"
   ];
 
@@ -111,7 +111,7 @@ message CancelEventRequest {
   // The event to cancel.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Event",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Event",
     (buf.validate.field).string.pattern = "^calendars/[^/]+/events/[^/]+$"
   ];
 
@@ -141,7 +141,7 @@ message DeclineCounterEventRequest {
   // The event whose counter-proposal is being declined.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Event",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Event",
     (buf.validate.field).string.pattern = "^calendars/[^/]+/events/[^/]+$"
   ];
 

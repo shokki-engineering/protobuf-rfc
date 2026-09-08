@@ -20,7 +20,7 @@ message GetMembershipRequest {
   // Name of the membership, "ldapGroups/{ldap_group}/memberships/{membership}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Membership",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Membership",
     (buf.validate.field).string.pattern = "^ldapGroups/[^/]+/memberships/[^/]+$"
   ];
 }
@@ -30,7 +30,7 @@ message ListMembershipsRequest {
   // Group whose memberships to list, "ldapGroups/{ldap_group}".
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).child_type = "protobufrfc.dev/Membership",
+    (google.api.resource_reference).child_type = "the-protobuf-project.org/Membership",
     (buf.validate.field).string.pattern = "^ldapGroups/[^/]+$"
   ];
 
@@ -64,7 +64,7 @@ message CreateMembershipRequest {
   // Group to add the member to, "ldapGroups/{ldap_group}".
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).child_type = "protobufrfc.dev/Membership",
+    (google.api.resource_reference).child_type = "the-protobuf-project.org/Membership",
     (buf.validate.field).string.pattern = "^ldapGroups/[^/]+$"
   ];
 
@@ -98,7 +98,7 @@ message DeleteMembershipRequest {
   // Name of the membership to revoke.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Membership",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Membership",
     (buf.validate.field).string.pattern = "^ldapGroups/[^/]+/memberships/[^/]+$"
   ];
 }

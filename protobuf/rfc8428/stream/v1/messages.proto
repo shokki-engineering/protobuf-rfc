@@ -21,7 +21,7 @@ message GetStreamRequest {
   // Name of the stream to retrieve, "streams/{stream}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Stream",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Stream",
     (buf.validate.field).string.pattern = "^streams/[^/]+$"
   ];
 }
@@ -86,7 +86,7 @@ message DeleteStreamRequest {
   // Name of the stream to delete, "streams/{stream}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Stream",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Stream",
     (buf.validate.field).string.pattern = "^streams/[^/]+$"
   ];
 }
@@ -96,7 +96,7 @@ message UndeleteStreamRequest {
   // Name of the soft-deleted stream to restore.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Stream",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Stream",
     (buf.validate.field).string.pattern = "^streams/[^/]+$"
   ];
 }
@@ -106,7 +106,7 @@ message AppendStreamRecordsRequest {
   // Name of the stream to append to, "streams/{stream}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Stream",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Stream",
     (buf.validate.field).string.pattern = "^streams/[^/]+$"
   ];
 
@@ -138,7 +138,7 @@ message ResolveStreamRequest {
   // Name of the stream to resolve, "streams/{stream}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Stream",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Stream",
     (buf.validate.field).string.pattern = "^streams/[^/]+$"
   ];
 }

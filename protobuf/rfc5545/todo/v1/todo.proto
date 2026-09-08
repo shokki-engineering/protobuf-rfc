@@ -35,7 +35,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc5545.todo.v1";
 // https://www.rfc-editor.org/rfc/rfc5545.html#section-3.6.2
 message Todo {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Todo"
+    type: "the-protobuf-project.org/Todo"
     pattern: "calendars/{calendar}/todos/{todo}"
     singular: "todo"
     plural: "todos"

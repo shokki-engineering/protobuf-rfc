@@ -20,7 +20,7 @@ message GetUnitRequest {
   // Name of the unit to retrieve, "units/{unit}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Unit",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Unit",
     (buf.validate.field).string.pattern = "^units/[^/]+$"
   ];
 }
@@ -85,7 +85,7 @@ message DeleteUnitRequest {
   // Name of the unit to delete, "units/{unit}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Unit",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Unit",
     (buf.validate.field).string.pattern = "^units/[^/]+$"
   ];
 }
@@ -95,7 +95,7 @@ message UndeleteUnitRequest {
   // Name of the soft-deleted unit to restore.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Unit",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Unit",
     (buf.validate.field).string.pattern = "^units/[^/]+$"
   ];
 }

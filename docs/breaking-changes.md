@@ -23,7 +23,7 @@ legacy resources keep their full CRUD services; they are not deprecated.
 Also renamed with them: the services (`Users` → `Vcards`, `Groups` →
 `LdapGroups`), every request message, the `google.api.http` paths, the request
 resource fields (`user` → `vcard`, `group` → `ldap_group`) and their id fields,
-and the `protobufrfc.dev/User` and `/Group` example strings in
+and the `the-protobuf-project.org/User` and `/Group` example strings in
 `shared/interchange`'s comments.
 
 **`buf breaking` reports 19 findings against this**, all file and message

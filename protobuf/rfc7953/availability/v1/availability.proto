@@ -43,7 +43,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc7953.availabilit
 // https://www.rfc-editor.org/rfc/rfc7953.html#section-3.1
 message Availability {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Availability"
+    type: "the-protobuf-project.org/Availability"
     pattern: "calendars/{calendar}/availabilities/{availability}"
     singular: "availability"
     plural: "availabilities"

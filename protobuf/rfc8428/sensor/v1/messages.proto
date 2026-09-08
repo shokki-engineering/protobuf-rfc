@@ -20,7 +20,7 @@ message GetSensorRequest {
   // Name of the sensor to retrieve, "sensors/{sensor}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Sensor",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Sensor",
     (buf.validate.field).string.pattern = "^sensors/[^/]+$"
   ];
 }
@@ -85,7 +85,7 @@ message DeleteSensorRequest {
   // Name of the sensor to delete, "sensors/{sensor}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Sensor",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Sensor",
     (buf.validate.field).string.pattern = "^sensors/[^/]+$"
   ];
 }
@@ -95,7 +95,7 @@ message UndeleteSensorRequest {
   // Name of the soft-deleted sensor to restore.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Sensor",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Sensor",
     (buf.validate.field).string.pattern = "^sensors/[^/]+$"
   ];
 }

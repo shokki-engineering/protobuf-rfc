@@ -39,7 +39,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc4519.group.v1";
 // https://www.rfc-editor.org/rfc/rfc4519.html#section-3.5
 message LdapGroup {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/LdapGroup"
+    type: "the-protobuf-project.org/LdapGroup"
     pattern: "ldapGroups/{ldap_group}"
     singular: "ldapGroup"
     plural: "ldapGroups"
@@ -73,7 +73,7 @@ message LdapGroup {
   // belong to an organization.
   string organization = 6 [
     (google.api.field_behavior) = OPTIONAL,
-    (google.api.resource_reference).type = "protobufrfc.dev/Organization"
+    (google.api.resource_reference).type = "the-protobuf-project.org/Organization"
   ];
 
   // 'businessCategory', section 2.1 <https://www.rfc-editor.org/rfc/rfc4519.html#section-2.1>.

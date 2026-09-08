@@ -21,7 +21,7 @@ message GetCalendarRequest {
   // Name of the calendar to retrieve, "calendars/{calendar}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Calendar",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Calendar",
     (buf.validate.field).string.pattern = "^calendars/[^/]+$"
   ];
 }
@@ -86,7 +86,7 @@ message DeleteCalendarRequest {
   // Name of the calendar to delete, "calendars/{calendar}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Calendar",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Calendar",
     (buf.validate.field).string.pattern = "^calendars/[^/]+$"
   ];
 
@@ -104,7 +104,7 @@ message UndeleteCalendarRequest {
   // Name of the soft-deleted calendar to restore.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Calendar",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Calendar",
     (buf.validate.field).string.pattern = "^calendars/[^/]+$"
   ];
 }
@@ -115,7 +115,7 @@ message QueryFreeBusyRequest {
   // The calendar to query, "calendars/{calendar}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Calendar",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Calendar",
     (buf.validate.field).string.pattern = "^calendars/[^/]+$"
   ];
 

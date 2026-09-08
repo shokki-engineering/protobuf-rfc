@@ -40,7 +40,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc5545.event.v1";
 // https://www.rfc-editor.org/rfc/rfc5545.html#section-3.6.1
 message Event {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Event"
+    type: "the-protobuf-project.org/Event"
     pattern: "calendars/{calendar}/events/{event}"
     singular: "event"
     plural: "events"

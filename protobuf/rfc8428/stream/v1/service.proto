@@ -22,9 +22,9 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc8428.stream.v1";
 // sent, so the order it grew in is part of the data.
 //
 // The four sensml media types (section 12.3.2 <https://www.rfc-editor.org/rfc/rfc8428.html#section-12.3.2> onward) are codecs
-// registered against "protobufrfc.dev/Stream" in `shared/interchange/v1`, kept
+// registered against "the-protobuf-project.org/Stream" in `shared/interchange/v1`, kept
 // separate from the four senml types registered against
-// "protobufrfc.dev/Pack". A consumer asking for "application/sensml+json" is
+// "the-protobuf-project.org/Pack". A consumer asking for "application/sensml+json" is
 // asking for stream semantics, and serving it a pack would answer a different
 // question.
 service Streams {

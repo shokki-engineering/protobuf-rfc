@@ -20,7 +20,7 @@ message GetResourceRequest {
   // Name of the resource to retrieve, "resources/{resource}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Resource",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Resource",
     (buf.validate.field).string.pattern = "^resources/[^/]+$"
   ];
 }
@@ -85,7 +85,7 @@ message DeleteResourceRequest {
   // Name of the resource to delete, "resources/{resource}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Resource",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Resource",
     (buf.validate.field).string.pattern = "^resources/[^/]+$"
   ];
 }
@@ -95,7 +95,7 @@ message UndeleteResourceRequest {
   // Name of the soft-deleted resource to restore.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Resource",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Resource",
     (buf.validate.field).string.pattern = "^resources/[^/]+$"
   ];
 }

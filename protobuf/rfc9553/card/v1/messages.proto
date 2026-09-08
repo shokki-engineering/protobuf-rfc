@@ -20,7 +20,7 @@ message GetCardRequest {
   // Name of the Card to retrieve, "cards/{card}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "protobufrfc.dev/Card"}
+    (google.api.resource_reference) = {type: "the-protobuf-project.org/Card"}
   ];
 }
 
@@ -91,7 +91,7 @@ message DeleteCardRequest {
   // Name of the Card to delete, "cards/{card}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "protobufrfc.dev/Card"}
+    (google.api.resource_reference) = {type: "the-protobuf-project.org/Card"}
   ];
 }
 
@@ -100,7 +100,7 @@ message UndeleteCardRequest {
   // Name of the soft-deleted Card to restore, "cards/{card}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Card",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Card",
     (buf.validate.field).string.pattern = "^cards/[^/]+$"
   ];
 }

@@ -36,7 +36,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc4519.organizatio
 // https://www.rfc-editor.org/rfc/rfc4519.html#section-3.11
 message OrganizationalUnit {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/OrganizationalUnit"
+    type: "the-protobuf-project.org/OrganizationalUnit"
     pattern: "organizationalUnits/{organizational_unit}"
     singular: "organizationalUnit"
     plural: "organizationalUnits"
@@ -81,7 +81,7 @@ message OrganizationalUnit {
   // so the field exists despite having no RFC attribute behind it.
   string organization = 7 [
     (google.api.field_behavior) = OPTIONAL,
-    (google.api.resource_reference).type = "protobufrfc.dev/Organization"
+    (google.api.resource_reference).type = "the-protobuf-project.org/Organization"
   ];
 
   // When the organizational unit was created.

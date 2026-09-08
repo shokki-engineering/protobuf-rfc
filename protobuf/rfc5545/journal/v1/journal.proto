@@ -31,7 +31,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc5545.journal.v1"
 // https://www.rfc-editor.org/rfc/rfc5545.html#section-3.6.3
 message Journal {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Journal"
+    type: "the-protobuf-project.org/Journal"
     pattern: "calendars/{calendar}/journals/{journal}"
     singular: "journal"
     plural: "journals"

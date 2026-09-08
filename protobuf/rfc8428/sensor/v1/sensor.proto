@@ -58,7 +58,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc8428.sensor.v1";
 // not be rejected.
 message Sensor {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Sensor"
+    type: "the-protobuf-project.org/Sensor"
     pattern: "sensors/{sensor}"
     singular: "sensor"
     plural: "sensors"

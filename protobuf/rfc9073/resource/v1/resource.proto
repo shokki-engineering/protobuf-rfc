@@ -40,7 +40,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc9073.resource.v1
 // https://www.rfc-editor.org/rfc/rfc9073.html#section-7.3
 message Resource {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Resource"
+    type: "the-protobuf-project.org/Resource"
     pattern: "resources/{resource}"
     singular: "resource"
     plural: "resources"
@@ -104,7 +104,7 @@ message Resource {
   // the same trade OrganizationalUnit.organization records.
   string calendar = 9 [
     (google.api.field_behavior) = OPTIONAL,
-    (google.api.resource_reference).type = "protobufrfc.dev/Calendar"
+    (google.api.resource_reference).type = "the-protobuf-project.org/Calendar"
   ];
 
   // The organizational unit this resource belongs to, e.g. the car park a bay
@@ -115,7 +115,7 @@ message Resource {
   // question a catalogue is asked.
   string organizational_unit = 10 [
     (google.api.field_behavior) = OPTIONAL,
-    (google.api.resource_reference).type = "protobufrfc.dev/OrganizationalUnit"
+    (google.api.resource_reference).type = "the-protobuf-project.org/OrganizationalUnit"
   ];
 
   // When the resource was created.

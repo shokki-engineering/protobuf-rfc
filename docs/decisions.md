@@ -189,7 +189,7 @@ Everything the plans covered is built. What remains is either a decision
 nobody has needed to make yet or a consequence of work moving between
 repositories.
 
-- **`protobufrfc.dev`** is the resource-type prefix on all fourteen
+- **`the-protobuf-project.org`** is the resource-type prefix on all fourteen
   `google.api.resource` declarations and is a placeholder domain. Cheap to
   change now; a breaking change once a consumer depends on the type strings.
 - **Four committed files reference documents that are moving out.**

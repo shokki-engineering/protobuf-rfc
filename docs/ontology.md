@@ -67,8 +67,8 @@ are **codecs**, registered in `shared/interchange/v1`, not schemas.
 Eight of them, not four, and the split is not cosmetic. The `senml*` types
 carry a Pack and the `sensml*` types carry a SenSML Stream (§4.8), which
 resolves a relative time against when each *record* was sent rather than when
-the document was. They are registered against `protobufrfc.dev/Pack` and
-`protobufrfc.dev/Stream` respectively, so asking for `application/sensml+json`
+the document was. They are registered against `the-protobuf-project.org/Pack` and
+`the-protobuf-project.org/Stream` respectively, so asking for `application/sensml+json`
 and being served a pack is a type error rather than a formatting one.
 
 ### Legacy is not deprecated
@@ -93,7 +93,7 @@ the object** — not for the RFC number.
 | | Canonical | Legacy |
 |---|---|---|
 | message | `User` | `Vcard` |
-| type | `protobufrfc.dev/User` | `protobufrfc.dev/Vcard` |
+| type | `the-protobuf-project.org/User` | `the-protobuf-project.org/Vcard` |
 | pattern | `users/{user}` | `vcards/{vcard}` |
 | singular / plural | `user` / `users` | `vcard` / `vcards` |
 

@@ -20,7 +20,7 @@ message GetLdapGroupRequest {
   // Name of the group to retrieve, "ldapGroups/{ldap_group}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/LdapGroup",
+    (google.api.resource_reference).type = "the-protobuf-project.org/LdapGroup",
     (buf.validate.field).string.pattern = "^ldapGroups/[^/]+$"
   ];
 }
@@ -85,7 +85,7 @@ message DeleteLdapGroupRequest {
   // Name of the group to delete, "ldapGroups/{ldap_group}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/LdapGroup",
+    (google.api.resource_reference).type = "the-protobuf-project.org/LdapGroup",
     (buf.validate.field).string.pattern = "^ldapGroups/[^/]+$"
   ];
 
@@ -103,7 +103,7 @@ message UndeleteLdapGroupRequest {
   // Name of the soft-deleted group to restore, "ldapGroups/{ldap_group}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/LdapGroup",
+    (google.api.resource_reference).type = "the-protobuf-project.org/LdapGroup",
     (buf.validate.field).string.pattern = "^ldapGroups/[^/]+$"
   ];
 }

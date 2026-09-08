@@ -23,7 +23,7 @@ message ReplyEventRequest {
   // The event being replied to.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Event",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Event",
     (buf.validate.field).string.pattern = "^calendars/[^/]+/events/[^/]+$"
   ];
 
@@ -64,7 +64,7 @@ message RefreshEventRequest {
   // The event whose current description is wanted.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Event",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Event",
     (buf.validate.field).string.pattern = "^calendars/[^/]+/events/[^/]+$"
   ];
 
@@ -88,7 +88,7 @@ message CounterEventRequest {
   // The event being countered.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Event",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Event",
     (buf.validate.field).string.pattern = "^calendars/[^/]+/events/[^/]+$"
   ];
 

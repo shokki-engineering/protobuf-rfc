@@ -20,7 +20,7 @@ message GetUserRequest {
   // Name of the user to retrieve, "users/{user}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "protobufrfc.dev/User"}
+    (google.api.resource_reference) = {type: "the-protobuf-project.org/User"}
   ];
 }
 
@@ -90,7 +90,7 @@ message DeleteUserRequest {
   // Name of the user to delete, "users/{user}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type: "protobufrfc.dev/User"}
+    (google.api.resource_reference) = {type: "the-protobuf-project.org/User"}
   ];
 }
 
@@ -99,7 +99,7 @@ message UndeleteUserRequest {
   // Name of the soft-deleted user to restore, "users/{user}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/User",
+    (google.api.resource_reference).type = "the-protobuf-project.org/User",
     (buf.validate.field).string.pattern = "^users/[^/]+$"
   ];
 }

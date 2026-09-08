@@ -15,7 +15,7 @@ option java_package = "io.github.theprotobufproject.protobuf.shared.sync.v1";
 
 // Request message for Sync.SyncResources, RFC 6578 section 3.2 <https://www.rfc-editor.org/rfc/rfc6578.html#section-3.2>.
 message SyncResourcesRequest {
-  // Resource type to synchronize, e.g. "protobufrfc.dev/Card".
+  // Resource type to synchronize, e.g. "the-protobuf-project.org/Card".
   //
   // The string each resource declares in `google.api.resource`, which is what
   // rule 7 keys a generic service on. Discover the set through

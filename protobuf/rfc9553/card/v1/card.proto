@@ -47,7 +47,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc9553.card.v1";
 // https://www.rfc-editor.org/rfc/rfc9982.html
 message Card {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Card"
+    type: "the-protobuf-project.org/Card"
     pattern: "cards/{card}"
     singular: "card"
     plural: "cards"

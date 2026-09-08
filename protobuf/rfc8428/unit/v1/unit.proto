@@ -45,7 +45,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc8428.unit.v1";
 // https://www.rfc-editor.org/rfc/rfc8428.html#section-12.1
 message Unit {
   option (google.api.resource) = {
-    type: "protobufrfc.dev/Unit"
+    type: "the-protobuf-project.org/Unit"
     pattern: "units/{unit}"
     singular: "unit"
     plural: "units"

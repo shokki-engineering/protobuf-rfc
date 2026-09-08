@@ -21,7 +21,7 @@ message GetPackRequest {
   // Name of the pack to retrieve, "packs/{pack}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Pack",
     (buf.validate.field).string.pattern = "^packs/[^/]+$"
   ];
 }
@@ -86,7 +86,7 @@ message DeletePackRequest {
   // Name of the pack to delete, "packs/{pack}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Pack",
     (buf.validate.field).string.pattern = "^packs/[^/]+$"
   ];
 }
@@ -96,7 +96,7 @@ message UndeletePackRequest {
   // Name of the soft-deleted pack to restore.
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Pack",
     (buf.validate.field).string.pattern = "^packs/[^/]+$"
   ];
 }
@@ -106,7 +106,7 @@ message ResolvePackRequest {
   // Name of the pack to resolve, "packs/{pack}".
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference).type = "protobufrfc.dev/Pack",
+    (google.api.resource_reference).type = "the-protobuf-project.org/Pack",
     (buf.validate.field).string.pattern = "^packs/[^/]+$"
   ];
 

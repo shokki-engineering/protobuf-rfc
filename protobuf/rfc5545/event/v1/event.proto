@@ -128,6 +128,14 @@ message Event {
   // RDATE, section 3.8.5.2 <https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.5.2>. Extra instances outside the rule.
   repeated CalendarTime additional_times = 15 [(google.api.field_behavior) = OPTIONAL];
 
+  // RECURRENCE-ID, section 3.8.4.4 <https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4>. Set on an override: an event sharing
+  // its series' ical_uid that replaces the one instance whose start, as the
+  // series generated it, was this -- moved, retimed, or cancelled with
+  // confirmation CANCELLED. Absent on the series itself and on an event that
+  // happens once. RANGE=THISANDFUTURE is not modelled; a client splits the
+  // series instead.
+  CalendarTime original_start = 35 [(google.api.field_behavior) = OPTIONAL];
+
   // SEQUENCE, section 3.8.7.4 <https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.7.4>. Incremented by the organiser on each
   // significant revision, so an attendee can tell a stale invitation from a
   // current one.

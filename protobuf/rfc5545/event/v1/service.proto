@@ -17,7 +17,7 @@ option java_package = "io.github.theprotobufproject.protobuf.rfc5545.event.v1";
 
 // Events manages RFC 5545 events as resources.
 //
-// Named Events, not Calendar: the calendar a event belongs to is its own
+// Named Events, not Calendar: the calendar an event belongs to is its own
 // resource, managed by protobuf.rfc5545.calendar.v1.Calendars. A service
 // named after the parent while managing the child is how a reader ends up
 // looking for CreateCalendar here.
@@ -86,7 +86,7 @@ service Events {
     option (google.api.http) = {get: "/v1/{parent=calendars/*}/events:batchGet"};
   }
 
-  // Creates a event.
+  // Creates an event.
   //
   //   POST /v1/{parent=calendars/*}/events
   //   body: the event itself
@@ -110,7 +110,7 @@ service Events {
     option (google.api.method_signature) = "parent,event,event_id";
   }
 
-  // Updates a event.
+  // Updates an event.
   //
   //   PATCH /v1/{event.name=calendars/*/events/*}
   //   body: the event itself
@@ -134,7 +134,7 @@ service Events {
     option (google.api.method_signature) = "event,update_mask";
   }
 
-  // Deletes a event.
+  // Deletes an event.
   //
   //   DELETE /v1/{name=calendars/*/events/*}
   //

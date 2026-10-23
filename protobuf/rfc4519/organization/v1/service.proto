@@ -52,7 +52,7 @@ service Organizations {
     option (google.api.http) = {get: "/v1/organizations"};
   }
 
-  // Creates a organization.
+  // Creates an organization.
   //
   //   POST /v1/organizations
   //   body: the organization itself
@@ -76,7 +76,7 @@ service Organizations {
     option (google.api.method_signature) = "organization,organization_id";
   }
 
-  // Updates a organization.
+  // Updates an organization.
   //
   //   PATCH /v1/{organization.name=organizations/*}
   //   body: the organization itself
@@ -100,7 +100,7 @@ service Organizations {
     option (google.api.method_signature) = "organization,update_mask";
   }
 
-  // Deletes a organization.
+  // Deletes an organization.
   //
   //   DELETE /v1/{name=organizations/*}
   //

@@ -54,7 +54,7 @@ service OrganizationalUnits {
     option (google.api.http) = {get: "/v1/organizationalUnits"};
   }
 
-  // Creates a organizational unit.
+  // Creates an organizational unit.
   //
   //   POST /v1/organizationalUnits
   //   body: the organizational unit itself
@@ -78,7 +78,7 @@ service OrganizationalUnits {
     option (google.api.method_signature) = "organizational_unit,organizational_unit_id";
   }
 
-  // Updates a organizational unit.
+  // Updates an organizational unit.
   //
   //   PATCH /v1/{organizational_unit.name=organizationalUnits/*}
   //   body: the organizational unit itself
@@ -102,7 +102,7 @@ service OrganizationalUnits {
     option (google.api.method_signature) = "organizational_unit,update_mask";
   }
 
-  // Deletes a organizational unit.
+  // Deletes an organizational unit.
   //
   //   DELETE /v1/{name=organizationalUnits/*}
   //

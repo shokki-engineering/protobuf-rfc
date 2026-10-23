@@ -1,0 +1,93 @@
+name: Main
+
+# What a push to main does: the same Lint and Generate gates a pull request
+# runs, then the two jobs that write somewhere -- the regenerated reference
+# committed back, and the module pushed to the BSR.
+#
+# Lint and Generate are called rather than triggered on push themselves,
+# because `needs` cannot reach a job in another workflow. Calling them here is
+# what lets Docs and PublishModule wait on them.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  Lint:
+    name: Lint
+    uses: ./.github/workflows/lint.yml
+
+  Generate:
+    name: Generate
+    uses: ./.github/workflows/generate.yml
+
+  # Regenerates the per-module reference under protobuf/ and commits it back.
+  #
+  # tools/docs imports nothing outside the standard library, so it runs
+  # without a go.mod: `go run <files>` builds the "command-line-arguments"
+  # pseudo-package and needs no module context. `go run ./tools/docs` would
+  # fail here, because the package form does require one and this repository
+  # has no root module.
+  Docs:
+    name: Docs
+    needs: [Lint]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.26"
+
+      - name: Generate reference
+        run: go run tools/docs/*.go
+
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add protobuf
+          # Nothing to do when the committed docs already match the schemas,
+          # which is the common case.
+          if git diff --cached --quiet; then
+            echo "Reference is already up to date."
+            exit 0
+          fi
+          # [skip ci] stops this push from triggering the workflow again. The
+          # loop would terminate anyway -- a second run regenerates identical
+          # files and commits nothing -- but a wasted run per docs change adds
+          # up.
+          git commit -m "docs: regenerate protobuf reference [skip ci]"
+          git push
+
+  PublishModule:
+    name: Publish Module
+    needs: [Lint, Generate]
+    runs-on: ubuntu-latest
+    env:
+      BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Skipped rather than failed when BUF_TOKEN is absent. Secrets cannot be
+      # read in a job-level `if`, but job-level env can, so the guard is here.
+      - name: Push To BSR
+        if: env.BUF_TOKEN != ''
+        uses: bufbuild/buf-action@v1
+        with:
+          token: ${{ secrets.BUF_TOKEN }}
+          push: true
+          # The module is created by hand in the BSR with the intended
+          # visibility. Letting CI create it would make that choice silently
+          # on the first green build.
+          push_disable_create: true

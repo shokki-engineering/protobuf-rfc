@@ -1,9 +1,10 @@
 # protobuf-rfc — working conditions
 
 Protobuf types for things the IETF already specified. Every rule below is a
-hard constraint, not a preference. `.github/workflows/ci.yml` enforces the
-ones that can be enforced mechanically -- inline, with no helper scripts, so
-the workflow is the single definition of every gate. The rest are on you.
+hard constraint, not a preference. The workflows in `.github/workflows/`
+enforce the ones that can be enforced mechanically -- inline, with no helper
+scripts, so the workflows are the single definition of every gate. The rest
+are on you.
 
 ## 1. No lint rule may be disabled
 
@@ -218,8 +219,9 @@ buf build
 ```
 
 plus `api-linter` over `protobuf/**/*.proto` and the 250-line cap. All of it
-is inline in `.github/workflows/ci.yml` -- read the steps there rather than
-trusting this list to stay current.
+is inline in `.github/workflows/lint.yml`, with the per-language compile in
+`generate.yml` -- read the steps there rather than trusting this list to stay
+current.
 
 Note that the VS Code Google API Linter extension reads
 `workspace.protobuf.yaml`, not the CLI's arguments, so it may report

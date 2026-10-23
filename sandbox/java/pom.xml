@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   Sandbox POM for the generated Java SDK. Copied into gen/java by
-  scripts/sandbox-build.sh, which runs `mvn compile`. Compile only: nothing is
+  the Generate workflow, which runs `mvn compile`. Compile only: nothing is
   packaged, published or run.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"

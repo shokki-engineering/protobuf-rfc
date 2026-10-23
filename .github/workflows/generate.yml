@@ -1,0 +1,136 @@
+name: Generate
+
+# Generates each language and compiles it against the templates in sandbox/.
+#
+# Its own workflow because it is a matrix over four toolchains and is by far
+# the slowest gate, and because what it proves is distinct from linting: that
+# the schema produces code a consumer can actually build. buf lint cannot tell
+# you that.
+#
+# Pull requests trigger it directly; a push to main runs it through main.yml,
+# for the reason given in lint.yml.
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  Generate:
+    name: ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: Go
+            template: buf.gen.yaml
+          - language: TypeScript
+            template: buf.gen.ts.yaml
+          - language: Python
+            template: buf.gen.python.yaml
+          - language: Java
+            template: buf.gen.yaml
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Buf
+        uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+
+      - name: Setup Go
+        if: matrix.language == 'Go'
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.26"
+
+      - name: Setup Node
+        if: matrix.language == 'TypeScript'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Setup Python
+        if: matrix.language == 'Python'
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - name: Setup Java
+        if: matrix.language == 'Java'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      # Only the template this leg compiles. Go and Java share buf.gen.yaml
+      # and resolve dependencies through published artifacts. TypeScript and
+      # Python each need --include-imports: protoc-gen-es emits relative
+      # imports for every dependency, and the generated Python does
+      # `from buf.validate import validate_pb2`, which no PyPI package
+      # exposes. Their templates say the same.
+      - name: Generate
+        run: |
+          extra=""
+          case "${{ matrix.template }}" in
+            buf.gen.ts.yaml|buf.gen.python.yaml) extra=--include-imports ;;
+          esac
+          buf generate --template ${{ matrix.template }} $extra
+
+      # Compile only. Nothing is run, packaged or published.
+      - name: Build Go
+        if: matrix.language == 'Go'
+        run: |
+          cp sandbox/go/go.mod gen/go/go.mod
+          cd gen/go
+          GOFLAGS=-mod=mod go mod tidy
+          go build ./...
+
+      - name: Build TypeScript
+        if: matrix.language == 'TypeScript'
+        run: |
+          cp sandbox/ts/package.json sandbox/ts/tsconfig.json gen/ts/
+          cd gen/ts
+          npm install --no-fund --no-audit
+          npx tsc --noEmit
+
+      - name: Build Python
+        if: matrix.language == 'Python'
+        run: |
+          pip install --quiet -r sandbox/python/requirements.txt
+          cd gen/python
+          # google.api, google.longrunning and google.rpc come from
+          # googleapis-common-protos. Keeping the generated copies would make
+          # `google` a regular package at sys.path[0], shadowing the installed
+          # one and hiding google.protobuf with it.
+          rm -rf google
+          # Make the remaining trees regular packages so they win the import
+          # scan at sys.path[0]. Without __init__.py they are only namespace
+          # portions, and a regular package named `protobuf` further down
+          # sys.path beats a namespace portion at the front.
+          find protobuf buf -type d -exec touch {}/__init__.py \;
+          # Importing every module exercises the descriptor pool, which is
+          # where a bad schema actually fails. Compiling the files would not.
+          python - <<'PY'
+          import importlib, pathlib, sys
+          sys.path.insert(0, ".")
+          mods = sorted(
+              p.with_suffix("").as_posix().replace("/", ".")
+              for p in pathlib.Path("protobuf").rglob("*_pb2.py")
+          )
+          for m in mods:
+              importlib.import_module(m)
+          print(f"Imported {len(mods)} generated modules.")
+          PY
+
+      - name: Build Java
+        if: matrix.language == 'Java'
+        run: |
+          cp sandbox/java/pom.xml gen/java/pom.xml
+          cd gen/java
+          mvn --quiet --batch-mode compile

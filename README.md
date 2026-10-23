@@ -153,8 +153,8 @@ buf generate --template buf.gen.ts.yaml --include-imports # TypeScript
 ```
 
 Plus `api-linter` and the 250-line file cap, both of which CI enforces —
-see `.github/workflows/ci.yml`. There are no helper scripts: the workflow is
-the single definition of every gate. No lint rule may be disabled.
+see `.github/workflows/`. There are no helper scripts: the workflows are the
+single definition of every gate. No lint rule may be disabled.
 
 ## License
 

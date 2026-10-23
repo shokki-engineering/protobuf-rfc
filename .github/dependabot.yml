@@ -1,0 +1,60 @@
+# Dependency updates.
+#
+# Five ecosystems, because the repository pins versions in five places and
+# they fail differently. A stale action is a CI break; a stale sandbox runtime
+# is a *generated-code* break, since the BSR plugins emit code that refuses a
+# runtime older than the gencode that wrote it.
+#
+# tools/docs is absent on purpose: it has no go.mod and imports only the
+# standard library, so there is nothing for Dependabot to bump.
+version: 2
+
+updates:
+  # The workflows. Grouped: a bump to one action almost never conflicts with
+  # a bump to another, and a PR per action in a routine week is noise.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]
+    labels: [dependencies, ci]
+
+  # The compile-only templates copied over gen/ by the Generate workflow.
+  # These are what prove the schema produces code a consumer can build, so
+  # their runtime versions are the ones that matter most.
+  - package-ecosystem: gomod
+    directory: /sandbox/go
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies, generated-code]
+
+  - package-ecosystem: npm
+    directory: /sandbox/ts
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      typescript:
+        patterns: ["*"]
+    labels: [dependencies, generated-code]
+
+  - package-ecosystem: maven
+    directory: /sandbox/java
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      java:
+        patterns: ["*"]
+    labels: [dependencies, generated-code]
+
+  - package-ecosystem: pip
+    directory: /sandbox/python
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies, generated-code]

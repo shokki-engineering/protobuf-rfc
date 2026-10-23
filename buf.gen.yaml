@@ -2,7 +2,7 @@
 # published artifacts. TypeScript and Python each need --include-imports and
 # have their own template: buf.gen.ts.yaml and buf.gen.python.yaml.
 #
-# CI generates every target and compiles it -- see the GenerateAndBuild job.
+# CI generates every target and compiles it -- see .github/workflows/generate.yml.
 # Nothing is committed; `gen/` is gitignored.
 #
 # No .proto file carries a `go_package`, because the right value depends on

@@ -140,3 +140,22 @@ enum Transparency {
   // TRANSPARENT. Leaves the interval free.
   TRANSPARENCY_TRANSPARENT = 2;
 }
+
+// RecurrenceRange is the RANGE parameter, RFC 5545 section 3.2.13 <https://www.rfc-editor.org/rfc/rfc5545.html#section-3.2.13>, which
+// says how far a RECURRENCE-ID override reaches into its series.
+//
+// THISANDPRIOR has no value here: section 3.2.13 deprecates it and says it
+// MUST NOT be generated. A codec rejects it rather than reading it as a
+// single-instance override.
+//
+// Reference: RFC 5545 "Internet Calendaring and Scheduling Core Object Specification (iCalendar)", section 3.2.13.
+// https://www.rfc-editor.org/rfc/rfc5545.html#section-3.2.13
+enum RecurrenceRange {
+  // No RANGE parameter: the override replaces only the instance its
+  // RECURRENCE-ID names, the default in section 3.8.4.4 <https://www.rfc-editor.org/rfc/rfc5545.html#section-3.8.4.4>.
+  RECURRENCE_RANGE_UNSPECIFIED = 0;
+
+  // THISANDFUTURE. The override applies to the named instance and every
+  // instance after it.
+  RECURRENCE_RANGE_THIS_AND_FUTURE = 1;
+}

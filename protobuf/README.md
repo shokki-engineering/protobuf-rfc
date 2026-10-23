@@ -14,7 +14,7 @@ Every protobuf module under `protobuf/`. Each row links to that module's generat
 | Organization | `protobuf.rfc4519.organization.v1` | 1 | 8 | 0 | [README](rfc4519/organization/README.md) |
 | Organizational Unit | `protobuf.rfc4519.organizational_unit.v1` | 1 | 8 | 0 | [README](rfc4519/organizational_unit/README.md) |
 | Calendar | `protobuf.rfc5545.calendar.v1` | 1 | 12 | 2 | [README](rfc5545/calendar/README.md) |
-| Event | `protobuf.rfc5545.event.v1` | 1 | 25 | 12 | [README](rfc5545/event/README.md) |
+| Event | `protobuf.rfc5545.event.v1` | 1 | 25 | 13 | [README](rfc5545/event/README.md) |
 | Journal | `protobuf.rfc5545.journal.v1` | 1 | 10 | 2 | [README](rfc5545/journal/README.md) |
 | Todo | `protobuf.rfc5545.todo.v1` | 1 | 10 | 2 | [README](rfc5545/todo/README.md) |
 | Scheduling | `protobuf.rfc5546.scheduling.v1` | 2 | 19 | 1 | [README](rfc5546/scheduling/README.md) |
@@ -32,7 +32,7 @@ Every protobuf module under `protobuf/`. Each row links to that module's generat
 | Project | `protobuf.shared.project.v1` | 1 | 8 | 1 | [README](shared/project/README.md) |
 | Search | `protobuf.shared.search.v1` | 1 | 3 | 0 | [README](shared/search/README.md) |
 | Sync | `protobuf.shared.sync.v1` | 1 | 3 | 1 | [README](shared/sync/README.md) |
-| **Total** | _23 modules_ | 25 | 281 | 44 | |
+| **Total** | _23 modules_ | 25 | 281 | 45 | |
 
 ## Dependency graph
 
